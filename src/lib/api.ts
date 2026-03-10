@@ -1,0 +1,302 @@
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+export interface ApiError {
+  detail: string | Record<string, unknown>;
+  status: number;
+}
+
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("access_token");
+}
+
+export function setTokens(access: string, refresh: string) {
+  localStorage.setItem("access_token", access);
+  localStorage.setItem("refresh_token", refresh);
+}
+
+export function clearTokens() {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (!res.ok) {
+    let detail: string | Record<string, unknown> = res.statusText;
+    try {
+      const body = await res.json();
+      detail = body.detail || body;
+    } catch {}
+    const err: ApiError = { detail, status: res.status };
+    throw err;
+  }
+
+  if (res.status === 204) return {} as T;
+  return res.json();
+}
+
+// ── Auth ─────────────────────────────────────
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: "candidate" | "examiner" | "admin";
+  is_active: boolean;
+  created_at: string;
+}
+
+export const auth = {
+  login: (email: string, password: string) =>
+    request<LoginResponse>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  me: () => request<User>("/api/auth/me"),
+  refresh: (refresh_token: string) =>
+    request<LoginResponse>("/api/auth/refresh", {
+      method: "POST",
+      body: JSON.stringify({ refresh_token }),
+    }),
+};
+
+// ── Paginated ────────────────────────────────
+
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+// ── Questions ────────────────────────────────
+
+export interface Question {
+  id: string;
+  title: string;
+  section: string;
+  section_part: string;
+  test_type: string;
+  module_type: string;
+  type: string;
+  instruction: string;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+  passage?: string;
+  context?: string;
+  audio_url?: string;
+  image_url?: string;
+  options?: { label: string; text: string }[];
+  correct_option?: string;
+  correct_options?: string[];
+  [key: string]: unknown;
+}
+
+export const questions = {
+  list: (params: Record<string, string | number>) =>
+    request<Paginated<Question>>(
+      `/api/questions/list?${new URLSearchParams(
+        Object.entries(params).map(([k, v]) => [k, String(v)])
+      )}`
+    ),
+  get: (id: string) =>
+    request<Question>(`/api/questions/get?question_id=${id}`),
+  create: (data: Record<string, unknown>) =>
+    request<Question>("/api/questions/create", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  update: (id: string, data: Record<string, unknown>) =>
+    request<Question>("/api/questions/update", {
+      method: "PUT",
+      body: JSON.stringify({ question_id: id, ...data }),
+    }),
+  delete: (id: string) =>
+    request<{ status: string }>("/api/questions/delete", {
+      method: "DELETE",
+      body: JSON.stringify({ question_id: id }),
+    }),
+  bulkCreate: (questionsList: Record<string, unknown>[]) =>
+    request<Question[]>("/api/questions/bulk-create", {
+      method: "POST",
+      body: JSON.stringify({ questions: questionsList }),
+    }),
+};
+
+// ── Tests ────────────────────────────────────
+
+export interface Test {
+  id: string;
+  title: string;
+  description?: string;
+  test_type: string;
+  module_type: string;
+  sections: { section: string; section_part: string; question_ids: string[]; time_limit_minutes?: number }[];
+  is_published: boolean;
+  time_limit_minutes: number;
+  tags: string[];
+  question_count: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export const tests = {
+  list: (params: Record<string, string | number | boolean>) =>
+    request<Paginated<Test>>(
+      `/api/tests/list?${new URLSearchParams(
+        Object.entries(params).map(([k, v]) => [k, String(v)])
+      )}`
+    ),
+  get: (id: string) => request<Test>(`/api/tests/get?test_id=${id}`),
+  create: (data: Record<string, unknown>) =>
+    request<Test>("/api/tests/create", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  update: (id: string, data: Record<string, unknown>) =>
+    request<Test>("/api/tests/update", {
+      method: "PUT",
+      body: JSON.stringify({ test_id: id, ...data }),
+    }),
+  delete: (id: string) =>
+    request<{ status: string }>("/api/tests/delete", {
+      method: "DELETE",
+      body: JSON.stringify({ test_id: id }),
+    }),
+  publish: (id: string, is_published: boolean) =>
+    request<Test>("/api/tests/publish", {
+      method: "POST",
+      body: JSON.stringify({ test_id: id, is_published }),
+    }),
+};
+
+// ── Sessions ─────────────────────────────────
+
+export interface Session {
+  id: string;
+  test_id: string;
+  user_id: string;
+  status: string;
+  answers: Record<string, unknown>;
+  section_scores: { section: string; raw_score: number; max_score: number; band_score: number; details?: Record<string, unknown> }[];
+  overall_band?: number;
+  started_at: string;
+  finished_at?: string;
+  time_spent_seconds?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface SessionResult {
+  session_id: string;
+  test_id: string;
+  user_id: string;
+  status: string;
+  section_scores: { section: string; raw_score: number; max_score: number; band_score: number }[];
+  overall_band?: number;
+  started_at: string;
+  finished_at?: string;
+  time_spent_seconds?: number;
+}
+
+// ── Admin ────────────────────────────────────
+
+export interface DashboardStats {
+  total_users: number;
+  total_questions: number;
+  total_tests: number;
+  total_sessions: number;
+  active_sessions: number;
+  completed_sessions: number;
+  average_band?: number;
+  users_by_role: Record<string, number>;
+  sessions_by_status: Record<string, number>;
+}
+
+export interface QuestionAnalytics {
+  total_questions: number;
+  by_section: Record<string, number>;
+  by_type: Record<string, number>;
+  by_module: Record<string, number>;
+}
+
+export interface TestAnalytics {
+  total_tests: number;
+  published_tests: number;
+  draft_tests: number;
+  total_sessions: number;
+  band_distribution: Record<string, number>;
+  most_popular_tests: { test_id: string; title: string; attempts: number }[];
+}
+
+export const admin = {
+  dashboard: () => request<DashboardStats>("/api/admin/dashboard"),
+  users: {
+    list: (params: Record<string, string | number>) =>
+      request<Paginated<User & { total_sessions?: number }>>(
+        `/api/admin/users/list?${new URLSearchParams(
+          Object.entries(params).map(([k, v]) => [k, String(v)])
+        )}`
+      ),
+    get: (id: string) =>
+      request<User & { total_sessions: number; completed_sessions: number; average_band?: number; recent_sessions: Session[] }>(
+        `/api/admin/users/get?user_id=${id}`
+      ),
+    update: (id: string, data: { role?: string; is_active?: boolean }) =>
+      request<User>("/api/admin/users/update", {
+        method: "PUT",
+        body: JSON.stringify({ user_id: id, ...data }),
+      }),
+    deactivate: (id: string) =>
+      request<{ status: string }>("/api/admin/users/deactivate", {
+        method: "POST",
+        body: JSON.stringify({ user_id: id }),
+      }),
+  },
+  sessions: {
+    list: (params: Record<string, string | number>) =>
+      request<Paginated<Session>>(
+        `/api/admin/sessions/list?${new URLSearchParams(
+          Object.entries(params).map(([k, v]) => [k, String(v)])
+        )}`
+      ),
+    get: (id: string) =>
+      request<Session>(`/api/admin/sessions/get?session_id=${id}`),
+    result: (id: string) =>
+      request<SessionResult>(`/api/admin/sessions/result?session_id=${id}`),
+    grade: (session_id: string, section: string, band_score: number, details?: Record<string, unknown>) =>
+      request<Session>("/api/admin/sessions/grade", {
+        method: "POST",
+        body: JSON.stringify({ session_id, section, band_score, details }),
+      }),
+  },
+  analytics: {
+    questions: () => request<QuestionAnalytics>("/api/admin/analytics/questions"),
+    tests: () => request<TestAnalytics>("/api/admin/analytics/tests"),
+  },
+};
