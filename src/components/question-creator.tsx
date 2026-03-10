@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { questions as qApi } from "@/lib/api";
+import { useState, useCallback, useMemo, useRef } from "react";
+import { questions as qApi, storage, type Question } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,9 @@ import {
   Map,
   ArrowLeftRight,
   ToggleLeft,
+  BarChart2,
+  MessageSquare,
+  Upload,
 } from "lucide-react";
 
 // ─── Constants ───────────────────────────────────────────────
@@ -88,6 +91,7 @@ const QUESTION_TYPES: QuestionTypeInfo[] = [
   { value: "short_answer", label: "Short Answer", description: "Write a short answer", icon: PenTool, sections: ["listening", "reading"] },
   { value: "matching", label: "Matching", description: "Match items to categories", icon: ArrowLeftRight, sections: ["listening", "reading"] },
   { value: "matching_features", label: "Matching Features", description: "Match features to options", icon: ArrowLeftRight, sections: ["reading"] },
+  { value: "matching_information", label: "Matching Information", description: "Match pieces of information to paragraphs", icon: ArrowLeftRight, sections: ["reading"] },
   { value: "matching_headings", label: "Matching Headings", description: "Match headings to paragraphs", icon: ArrowLeftRight, sections: ["reading"] },
   { value: "map_labelling", label: "Map Labelling", description: "Label locations on a map", icon: Map, sections: ["listening"] },
   { value: "plan_labelling", label: "Plan Labelling", description: "Label a plan or diagram", icon: Map, sections: ["listening", "reading"] },
@@ -95,6 +99,20 @@ const QUESTION_TYPES: QuestionTypeInfo[] = [
   { value: "true_false_not_given", label: "True / False / Not Given", description: "Decide if statements are true, false, or not given", icon: ToggleLeft, sections: ["reading"] },
   { value: "yes_no_not_given", label: "Yes / No / Not Given", description: "Decide if statements agree with writer's views", icon: ToggleLeft, sections: ["reading"] },
   { value: "pick_from_list", label: "Pick from List", description: "Select answers from a list", icon: ListChecks, sections: ["reading"] },
+  // Writing
+  { value: "graph_description", label: "Graph / Chart Description", description: "Describe a graph, chart, or table (Task 1 Academic)", icon: BarChart2, sections: ["writing"] },
+  { value: "letter_writing", label: "Letter Writing", description: "Write a formal or informal letter (Task 1 General)", icon: FileText, sections: ["writing"] },
+  { value: "process_description", label: "Process Description", description: "Describe a process or diagram (Task 1 Academic)", icon: GitBranch, sections: ["writing"] },
+  { value: "map_comparison", label: "Map Comparison", description: "Compare two maps or plans (Task 1 Academic)", icon: Map, sections: ["writing"] },
+  { value: "essay_opinion", label: "Opinion Essay", description: "Give your opinion and support it (Task 2)", icon: PenTool, sections: ["writing"] },
+  { value: "essay_discussion", label: "Discussion Essay", description: "Discuss two views and give your opinion (Task 2)", icon: PenTool, sections: ["writing"] },
+  { value: "essay_problem_solution", label: "Problem & Solution Essay", description: "Identify problems and propose solutions (Task 2)", icon: PenTool, sections: ["writing"] },
+  { value: "essay_advantages", label: "Advantages & Disadvantages Essay", description: "Weigh up advantages and disadvantages (Task 2)", icon: PenTool, sections: ["writing"] },
+  { value: "essay_mixed", label: "Mixed Essay", description: "Two-part question essay (Task 2)", icon: PenTool, sections: ["writing"] },
+  // Speaking
+  { value: "speaking_interview", label: "Interview", description: "Familiar topic questions (Part 1)", icon: MessageSquare, sections: ["speaking"] },
+  { value: "speaking_cue_card", label: "Cue Card", description: "Speak for 1–2 minutes on a topic (Part 2)", icon: FileText, sections: ["speaking"] },
+  { value: "speaking_discussion", label: "Discussion", description: "In-depth discussion questions (Part 3)", icon: MessageSquare, sections: ["speaking"] },
 ];
 
 // ─── Types ───────────────────────────────────────────────────
@@ -193,16 +211,144 @@ const STEPS = [
   { id: 5, title: "Review", description: "Review & create" },
 ];
 
+// ─── Map Question → form ─────────────────────────────────────
+
+function questionToForm(q: Question): QuestionFormData {
+  return {
+    ...defaultForm,
+    title: q.title,
+    section: q.section,
+    section_part: q.section_part,
+    test_type: q.test_type,
+    module_type: q.module_type,
+    type: q.type,
+    instruction: q.instruction ?? "",
+    context: (q.context as string) ?? "",
+    passage: (q.passage as string) ?? "",
+    audio_url: (q.audio_url as string) ?? "",
+    image_url: (q.image_url as string) ?? "",
+    tags: (q.tags ?? []).join(", "),
+    options: (q.options as AnswerOption[])?.length ? (q.options as AnswerOption[]) : defaultForm.options,
+    correct_option: (q.correct_option as string) ?? "",
+    correct_options: (q.correct_options as string[]) ?? [],
+    sentences: (q.sentences as QuestionFormData["sentences"]) ?? defaultForm.sentences,
+    form_fields: (q.form_fields as QuestionFormData["form_fields"]) ?? defaultForm.form_fields,
+    table_cells: (q.table_cells as QuestionFormData["table_cells"]) ?? defaultForm.table_cells,
+    flow_steps: (q.flow_steps as QuestionFormData["flow_steps"]) ?? defaultForm.flow_steps,
+    summary_items: ((q.summary_items as { before: string; after: string; answer: string; word_options?: string[] | string }[]) ?? []).map(s => ({
+      before: s.before, after: s.after, answer: s.answer,
+      word_options: Array.isArray(s.word_options) ? s.word_options.join(", ") : (s.word_options ?? ""),
+    })),
+    short_items: (q.short_items as QuestionFormData["short_items"]) ?? defaultForm.short_items,
+    map_slots: (q.map_slots as QuestionFormData["map_slots"]) ?? defaultForm.map_slots,
+    map_word_box: (q.map_word_box as string[]) ?? [],
+    matching_items: (q.matching_items as QuestionFormData["matching_items"]) ?? defaultForm.matching_items,
+    heading_options: (q.heading_options as AnswerOption[]) ?? defaultForm.heading_options,
+    heading_items: (q.heading_items as QuestionFormData["heading_items"]) ?? defaultForm.heading_items,
+    tfng_items: (q.tfng_items as QuestionFormData["tfng_items"]) ?? defaultForm.tfng_items,
+    pick_items: (q.pick_items as QuestionFormData["pick_items"]) ?? defaultForm.pick_items,
+  };
+}
+
+// ─── File upload input (question-level) ──────────────────────
+
+function QuestionFileUpload({
+  label,
+  value,
+  accept,
+  placeholder,
+  uploadFn,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  accept: string;
+  placeholder: string;
+  uploadFn: (fileName: string, base64: string) => Promise<{ url: string; key: string }>;
+  onChange: (url: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState("");
+  const ref = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setErr("");
+    setUploading(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const r = reader.result as string;
+          resolve(r.includes(",") ? r.split(",")[1] : r);
+        };
+        reader.onerror = () => reject(new Error("read error"));
+        reader.readAsDataURL(file);
+      });
+      const result = await uploadFn(file.name, base64);
+      onChange(result.url);
+    } catch {
+      setErr("Upload failed");
+    } finally {
+      setUploading(false);
+      if (ref.current) ref.current.value = "";
+    }
+  };
+
+  const displayName = value ? (value.split("/").pop()?.split("?")[0] ?? value) : "";
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{label}</label>
+      <input ref={ref} type="file" accept={accept} className="hidden" onChange={handleFile} />
+      {value ? (
+        <div className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-2 text-xs text-zinc-700">
+          <span className="flex-1 truncate">{displayName}</span>
+          <button type="button" onClick={() => onChange("")} className="shrink-0 text-zinc-400 hover:text-red-500">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => ref.current?.click()}
+          className="flex w-full items-center gap-2 rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-500 hover:border-zinc-400 hover:text-zinc-700 transition-colors disabled:opacity-50"
+        >
+          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+          {uploading ? "Uploading…" : placeholder}
+        </button>
+      )}
+      {err && <p className="text-[11px] text-red-500">{err}</p>}
+    </div>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────
 
 interface QuestionCreatorProps {
   onClose: () => void;
   onCreated: () => void;
+  initialData?: Question;
+  onUpdated?: () => void;
+  initialSection?: string;
+  initialPart?: string;
 }
 
-export default function QuestionCreator({ onClose, onCreated }: QuestionCreatorProps) {
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState<QuestionFormData>({ ...defaultForm });
+export default function QuestionCreator({ onClose, onCreated, initialData, onUpdated, initialSection, initialPart }: QuestionCreatorProps) {
+  const isEditing = !!initialData;
+  const initialForm = useMemo(() => {
+    if (initialData) return questionToForm(initialData);
+    const base = { ...defaultForm };
+    if (initialSection) {
+      base.section = initialSection;
+      base.section_part = initialPart ?? (SECTION_PARTS[initialSection]?.[0]?.value ?? "");
+    }
+    return base;
+  }, [initialData, initialSection, initialPart]);
+  const [step, setStep] = useState(initialSection && !initialData ? 2 : 1);
+  const [form, setForm] = useState<QuestionFormData>(initialForm);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
 
@@ -249,7 +395,7 @@ export default function QuestionCreator({ onClose, onCreated }: QuestionCreatorP
     if (["map_labelling", "plan_labelling", "diagram_labelling"].includes(t)) {
       return form.map_slots.length >= 1 && form.map_slots.every((s) => s.answer.trim());
     }
-    if (t === "matching" || t === "matching_features") {
+    if (t === "matching" || t === "matching_features" || t === "matching_information") {
       return form.matching_items.length >= 1 && form.matching_items.every((m) => m.item.trim() && m.answer.trim());
     }
     if (t === "matching_headings") {
@@ -314,7 +460,7 @@ export default function QuestionCreator({ onClose, onCreated }: QuestionCreatorP
       base.map_slots = form.map_slots;
       if (form.map_word_box.length > 0) base.map_word_box = form.map_word_box;
     }
-    if (t === "matching" || t === "matching_features") {
+    if (t === "matching" || t === "matching_features" || t === "matching_information") {
       base.matching_items = form.matching_items;
       if (form.options.some((o) => o.text.trim())) base.options = form.options;
     }
@@ -335,13 +481,18 @@ export default function QuestionCreator({ onClose, onCreated }: QuestionCreatorP
     setError("");
     setCreating(true);
     try {
-      await qApi.create(buildPayload());
-      onCreated();
+      if (isEditing && initialData) {
+        await qApi.update(initialData.id, buildPayload());
+        onUpdated?.();
+      } else {
+        await qApi.create(buildPayload());
+        onCreated();
+      }
     } catch (err: unknown) {
       const e = err as { detail?: string | object };
       if (typeof e?.detail === "string") setError(e.detail);
       else if (e?.detail) setError(JSON.stringify(e.detail));
-      else setError("Failed to create question");
+      else setError(isEditing ? "Failed to update question" : "Failed to create question");
     } finally {
       setCreating(false);
     }
@@ -568,23 +719,23 @@ export default function QuestionCreator({ onClose, onCreated }: QuestionCreatorP
 
       <div className="grid grid-cols-2 gap-3">
         {form.section === "listening" && (
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Audio URL</label>
-            <Input
-              value={form.audio_url}
-              onChange={(e) => updateForm({ audio_url: e.target.value })}
-              placeholder="https://..."
-            />
-          </div>
-        )}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Image URL</label>
-          <Input
-            value={form.image_url}
-            onChange={(e) => updateForm({ image_url: e.target.value })}
-            placeholder="https://..."
+          <QuestionFileUpload
+            label="Audio"
+            value={form.audio_url}
+            accept="audio/*"
+            placeholder="Upload audio file"
+            uploadFn={(name, b64) => storage.uploadQuestionAudio(form.section, name, b64)}
+            onChange={(url) => updateForm({ audio_url: url })}
           />
-        </div>
+        )}
+        <QuestionFileUpload
+          label="Image"
+          value={form.image_url}
+          accept="image/*"
+          placeholder="Upload image"
+          uploadFn={(name, b64) => storage.uploadQuestionImage(form.section, name, b64)}
+          onChange={(url) => updateForm({ image_url: url })}
+        />
       </div>
 
       <div className="space-y-1.5">
@@ -1047,7 +1198,7 @@ export default function QuestionCreator({ onClose, onCreated }: QuestionCreatorP
     }
 
     // ── Matching ────────────────────────────────────────
-    if (t === "matching" || t === "matching_features") {
+    if (t === "matching" || t === "matching_features" || t === "matching_information") {
       return (
         <div className="space-y-4">
           <div>
@@ -1581,10 +1732,107 @@ export default function QuestionCreator({ onClose, onCreated }: QuestionCreatorP
                   ))}
                 </div>
               )}
-              {!["multiple_choice", "multiple_select", "note_completion", "sentence_completion", "true_false_not_given", "yes_no_not_given"].includes(form.type) && (
-                <pre className="text-xs text-zinc-500 bg-zinc-50 p-2 rounded-md overflow-auto max-h-32">
-                  {JSON.stringify(buildPayload(), null, 2)}
-                </pre>
+              {(form.type === "form_completion") && (
+                <div className="space-y-1">
+                  {form.form_fields.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="text-zinc-500 w-28 truncate">{f.label}:</span>
+                      {f.prefix && <span className="text-zinc-400">{f.prefix}</span>}
+                      <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{f.answer}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(form.type === "table_completion") && (
+                <div className="space-y-1">
+                  {form.table_cells.map((c, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="text-zinc-400 text-xs">[{c.row_header} / {c.col_header}]</span>
+                      <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{c.answer}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(form.type === "flow_chart_completion") && (
+                <div className="space-y-1">
+                  {form.flow_steps.map((s, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="text-zinc-400 text-xs w-6">{s.step_number}.</span>
+                      <span className="text-zinc-600 flex-1">{s.description}</span>
+                      {s.is_blank && <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{s.answer}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(form.type === "summary_completion") && (
+                <div className="space-y-1">
+                  {form.summary_items.map((s, i) => (
+                    <p key={i} className="text-sm text-zinc-600">
+                      {s.before} <span className="font-bold text-amber-700 bg-amber-50 px-1 rounded">{s.answer}</span> {s.after}
+                    </p>
+                  ))}
+                </div>
+              )}
+              {(form.type === "short_answer") && (
+                <div className="space-y-1">
+                  {form.short_items.map((s, i) => (
+                    <div key={i} className="text-sm">
+                      <span className="text-zinc-600">{i + 1}. {s.question}</span>
+                      <span className="ml-2 font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{s.answer}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(["map_labelling", "plan_labelling", "diagram_labelling"].includes(form.type)) && (
+                <div className="space-y-1">
+                  {form.map_slots.map((s, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="text-zinc-400 text-xs w-6">{s.slot_label}.</span>
+                      <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{s.answer}</span>
+                    </div>
+                  ))}
+                  {form.map_word_box.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1 pt-1 border-t border-zinc-100">
+                      {form.map_word_box.map((w, i) => (
+                        <span key={i} className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded">{w}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {(form.type === "matching" || form.type === "matching_features" || form.type === "matching_information") && (
+                <div className="space-y-1">
+                  {form.matching_items.map((m, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="text-zinc-600 flex-1">{m.item}</span>
+                      <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{m.answer}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(form.type === "matching_headings") && (
+                <div className="space-y-1">
+                  {form.heading_items.map((h, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="text-zinc-500 w-24 text-xs">{h.paragraph_label}</span>
+                      <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{h.answer}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(form.type === "pick_from_list") && (
+                <div className="space-y-2">
+                  {form.pick_items.map((p, i) => (
+                    <div key={i} className="text-sm">
+                      <span className="text-zinc-600">{i + 1}. {p.question}</span>
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {p.answers.map((a) => (
+                          <span key={a} className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-xs">{a}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
@@ -1610,11 +1858,11 @@ export default function QuestionCreator({ onClose, onCreated }: QuestionCreatorP
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative ml-auto flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-300">
+      <div className="relative ml-auto flex h-full w-full max-w-2xl flex-col bg-white text-zinc-900 shadow-2xl animate-in slide-in-from-right duration-300">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
           <div>
-            <h2 className="text-lg font-bold text-zinc-900">Create Question</h2>
+            <h2 className="text-lg font-bold text-zinc-900">{isEditing ? "Edit Question" : "Create Question"}</h2>
             <p className="text-xs text-zinc-500">Step {step} of {STEPS.length} &mdash; {STEPS[step - 1].description}</p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -1661,7 +1909,7 @@ export default function QuestionCreator({ onClose, onCreated }: QuestionCreatorP
               ) : (
                 <Check className="h-4 w-4 mr-2" />
               )}
-              Create Question
+              {isEditing ? "Update Question" : "Create Question"}
             </Button>
           )}
         </div>

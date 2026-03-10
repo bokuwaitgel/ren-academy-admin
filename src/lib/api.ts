@@ -150,17 +150,46 @@ export const questions = {
 
 // ── Tests ────────────────────────────────────
 
+export interface ListeningSectionData {
+  section_number: number;
+  audio_url: string;
+  question_ids: string[];
+}
+export interface ListeningModuleData { sections: ListeningSectionData[]; }
+
+export interface ReadingSectionData {
+  section_number: number;
+  passage: string;
+  question_ids: string[];
+}
+export interface ReadingModuleData { sections: ReadingSectionData[]; }
+
+export interface WritingTaskData {
+  task_number: number;
+  description: string;
+  image_url?: string;
+}
+export interface WritingModuleData { tasks: WritingTaskData[]; }
+
+export interface SpeakingPartData {
+  part_number: number;
+  question_ids: string[];
+}
+export interface SpeakingModuleData { parts: SpeakingPartData[]; }
+
 export interface Test {
   id: string;
   title: string;
   description?: string;
   test_type: string;
   module_type: string;
-  sections: { section: string; section_part: string; question_ids: string[]; time_limit_minutes?: number }[];
   is_published: boolean;
-  time_limit_minutes: number;
   tags: string[];
   question_count: number;
+  listening?: ListeningModuleData;
+  reading?: ReadingModuleData;
+  writing?: WritingModuleData;
+  speaking?: SpeakingModuleData;
   created_at: string;
   updated_at?: string;
 }
@@ -193,17 +222,64 @@ export const tests = {
       method: "POST",
       body: JSON.stringify({ test_id: id, is_published }),
     }),
+  section: {
+    add: (testId: string, module: string, data: Record<string, unknown>) =>
+      request<Test>("/api/tests/section/add", {
+        method: "POST",
+        body: JSON.stringify({ test_id: testId, module, ...data }),
+      }),
+    update: (testId: string, module: string, number: number, data: Record<string, unknown>) =>
+      request<Test>("/api/tests/section/update", {
+        method: "PUT",
+        body: JSON.stringify({ test_id: testId, module, number, ...data }),
+      }),
+    remove: (testId: string, module: string, number: number) =>
+      request<Test>("/api/tests/section/remove", {
+        method: "DELETE",
+        body: JSON.stringify({ test_id: testId, module, number }),
+      }),
+    addQuestion: (testId: string, sectionPart: string, questionId: string) =>
+      request<Test>("/api/tests/section/question/add", {
+        method: "POST",
+        body: JSON.stringify({ test_id: testId, section_part: sectionPart, question_id: questionId }),
+      }),
+    removeQuestion: (testId: string, sectionPart: string, questionId: string) =>
+      request<Test>("/api/tests/section/question/remove", {
+        method: "POST",
+        body: JSON.stringify({ test_id: testId, section_part: sectionPart, question_id: questionId }),
+      }),
+  },
 };
 
 // ── Sessions ─────────────────────────────────
+
+export interface SessionSectionState {
+  section: string;
+  order_index: number;
+  status: "not_started" | "in_progress" | "completed";
+  time_limit_seconds: number | null;
+  started_at: string | null;
+  completed_at: string | null;
+  time_spent_seconds: number | null;
+}
 
 export interface Session {
   id: string;
   test_id: string;
   user_id: string;
+  mode: "practice" | "full_test";
+  practice_section: string | null;
   status: string;
+  current_section: string | null;
+  session_sections: SessionSectionState[];
   answers: Record<string, unknown>;
-  section_scores: { section: string; raw_score: number; max_score: number; band_score: number; details?: Record<string, unknown> }[];
+  section_scores: {
+    section: string;
+    raw_score: number;
+    max_score: number;
+    band_score: number;
+    details?: Record<string, unknown>;
+  }[];
   overall_band?: number;
   started_at: string;
   finished_at?: string;
@@ -216,8 +292,14 @@ export interface SessionResult {
   session_id: string;
   test_id: string;
   user_id: string;
+  mode: "practice" | "full_test";
   status: string;
-  section_scores: { section: string; raw_score: number; max_score: number; band_score: number }[];
+  section_scores: {
+    section: string;
+    raw_score: number;
+    max_score: number;
+    band_score: number;
+  }[];
   overall_band?: number;
   started_at: string;
   finished_at?: string;
@@ -299,4 +381,57 @@ export const admin = {
     questions: () => request<QuestionAnalytics>("/api/admin/analytics/questions"),
     tests: () => request<TestAnalytics>("/api/admin/analytics/tests"),
   },
+};
+
+// ── Storage ──────────────────────────────────
+
+export const storage = {
+  uploadListeningAudio: (testId: string, moduleType: string, fileName: string, base64: string) =>
+    request<{ url: string; key: string }>("/api/storage/admin/s3/upload-listening-audio", {
+      method: "POST",
+      body: JSON.stringify({
+        test_id: testId,
+        module_type: moduleType,
+        file_name: fileName,
+        file_content_base64: base64,
+        content_type: "audio/mpeg",
+      }),
+    }),
+  uploadWritingImage: (testId: string, moduleType: string, fileName: string, base64: string) =>
+    request<{ url: string; key: string }>("/api/storage/admin/s3/upload-question-file", {
+      method: "POST",
+      body: JSON.stringify({
+        test_id: testId,
+        module_type: moduleType,
+        section: "writing",
+        file_name: fileName,
+        file_content_base64: base64,
+        sub_path: "images",
+      }),
+    }),
+  uploadQuestionAudio: (section: string, fileName: string, base64: string) =>
+    request<{ url: string; key: string }>("/api/storage/admin/s3/upload-question-file", {
+      method: "POST",
+      body: JSON.stringify({
+        test_id: "questions",
+        module_type: "general",
+        section,
+        file_name: fileName,
+        file_content_base64: base64,
+        content_type: "audio/mpeg",
+        sub_path: "audio",
+      }),
+    }),
+  uploadQuestionImage: (section: string, fileName: string, base64: string) =>
+    request<{ url: string; key: string }>("/api/storage/admin/s3/upload-question-file", {
+      method: "POST",
+      body: JSON.stringify({
+        test_id: "questions",
+        module_type: "general",
+        section,
+        file_name: fileName,
+        file_content_base64: base64,
+        sub_path: "images",
+      }),
+    }),
 };

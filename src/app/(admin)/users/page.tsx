@@ -2,140 +2,86 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { admin, type User, type Paginated } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Loader2,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  UserCog,
-  Ban,
-} from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Search, ChevronLeft, ChevronRight, UserCog, Ban } from "lucide-react";
 
 type UserRow = User & { total_sessions?: number };
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<Paginated<UserRow> | null>(null);
+  const [data, setData] = useState<Paginated<UserRow> | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // Edit dialog
   const [editUser, setEditUser] = useState<UserRow | null>(null);
   const [editRole, setEditRole] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
 
-  const fetchUsers = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string, string | number> = { page, page_size: 20 };
       if (roleFilter !== "all") params.role = roleFilter;
       if (search.trim()) params.search = search.trim();
-      const data = await admin.users.list(params);
-      setUsers(data);
-    } catch {
-      /* ignore */
-    } finally {
-      setLoading(false);
-    }
+      setData(await admin.users.list(params));
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   }, [page, search, roleFilter]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  useEffect(() => { load(); }, [load]);
 
-  const handleSearch = (val: string) => {
-    setSearch(val);
-    setPage(1);
-  };
-
-  const handleRoleFilter = (val: string) => {
-    setRoleFilter(val);
-    setPage(1);
-  };
-
-  const openEdit = (u: UserRow) => {
-    setEditUser(u);
-    setEditRole(u.role);
-  };
-
-  const handleSave = async () => {
+  const handleSaveRole = async () => {
     if (!editUser) return;
     setSaving(true);
     try {
       await admin.users.update(editUser.id, { role: editRole });
       setEditUser(null);
-      fetchUsers();
-    } catch {
-      /* ignore */
-    } finally {
-      setSaving(false);
-    }
+      load();
+    } catch (e) { console.error(e); }
+    finally { setSaving(false); }
   };
 
-  const handleDeactivate = async (userId: string) => {
-    if (!confirm("Are you sure you want to deactivate this user?")) return;
-    try {
-      await admin.users.deactivate(userId);
-      fetchUsers();
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const roleBadge = (role: string) => {
-    switch (role) {
-      case "admin":
-        return <Badge variant="default">Admin</Badge>;
-      case "examiner":
-        return <Badge variant="warning">Examiner</Badge>;
-      default:
-        return <Badge variant="secondary">Candidate</Badge>;
-    }
+  const handleDeactivate = async (id: string) => {
+    if (!confirm("Deactivate this user?")) return;
+    setDeactivatingId(id);
+    try { await admin.users.deactivate(id); load(); }
+    catch (e) { console.error(e); }
+    finally { setDeactivatingId(null); }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Users</h1>
-        <p className="text-sm text-zinc-500">Manage user accounts and roles</p>
+        <h1 className="text-xl font-bold text-zinc-100">Users</h1>
+        <p className="text-sm text-zinc-500">{data?.total ?? 0} total users</p>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+      <div className="flex gap-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <Input
-            placeholder="Search by username or email…"
-            className="pl-9"
+            placeholder="Search username or email…"
             value={search}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="pl-9"
           />
         </div>
-        <Select value={roleFilter} onValueChange={handleRoleFilter}>
+        <Select value={roleFilter} onValueChange={(v) => { setRoleFilter(v); setPage(1); }}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="All roles" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All roles</SelectItem>
+            <SelectItem value="all">All Roles</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="examiner">Examiner</SelectItem>
             <SelectItem value="candidate">Candidate</SelectItem>
@@ -148,11 +94,7 @@ export default function UsersPage() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-            </div>
-          ) : !users || users.items.length === 0 ? (
-            <div className="flex h-48 items-center justify-center text-sm text-zinc-400">
-              No users found
+              <Loader2 className="h-6 w-6 animate-spin text-zinc-600" />
             </div>
           ) : (
             <Table>
@@ -162,50 +104,66 @@ export default function UsersPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Sessions</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.items.map((u) => (
+                {data?.items.map((u) => (
                   <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.username}</TableCell>
-                    <TableCell className="text-zinc-500">{u.email}</TableCell>
-                    <TableCell>{roleBadge(u.role)}</TableCell>
+                    <TableCell className="font-medium text-zinc-200">{u.username}</TableCell>
+                    <TableCell className="text-zinc-400 text-sm">{u.email}</TableCell>
                     <TableCell>
-                      {u.is_active ? (
-                        <Badge variant="success">Active</Badge>
-                      ) : (
-                        <Badge variant="destructive">Inactive</Badge>
-                      )}
+                      <Badge
+                        variant={u.role === "admin" ? "indigo" : u.role === "examiner" ? "warning" : "secondary"}
+                        className="capitalize"
+                      >
+                        {u.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={u.is_active ? "success" : "secondary"}>
+                        {u.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-zinc-500 text-sm">
+                      {u.total_sessions ?? "—"}
                     </TableCell>
                     <TableCell className="text-zinc-500 text-xs">
                       {new Date(u.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex justify-end gap-1">
                         <Button
-                          variant="ghost"
-                          size="icon"
+                          variant="ghost" size="icon"
                           title="Edit role"
-                          onClick={() => openEdit(u)}
+                          onClick={() => { setEditUser(u); setEditRole(u.role); }}
                         >
                           <UserCog className="h-4 w-4" />
                         </Button>
                         {u.is_active && (
                           <Button
-                            variant="ghost"
-                            size="icon"
+                            variant="ghost" size="icon"
+                            className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
                             title="Deactivate"
                             onClick={() => handleDeactivate(u.id)}
+                            disabled={deactivatingId === u.id}
                           >
-                            <Ban className="h-4 w-4 text-red-500" />
+                            {deactivatingId === u.id
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <Ban className="h-4 w-4" />}
                           </Button>
                         )}
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
+                {!data?.items.length && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-32 text-center text-zinc-600">No users found</TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}
@@ -213,56 +171,36 @@ export default function UsersPage() {
       </Card>
 
       {/* Pagination */}
-      {users && users.total_pages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-500">
-            Page {users.page} of {users.total_pages} ({users.total} users)
-          </span>
+      {data && data.total_pages > 1 && (
+        <div className="flex items-center justify-between text-sm text-zinc-500">
+          <span>Page {data.page} of {data.total_pages}</span>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
               <ChevronLeft className="h-4 w-4" />
-              Previous
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= users.total_pages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
+            <Button variant="outline" size="sm" disabled={page >= data.total_pages} onClick={() => setPage(p => p + 1)}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       )}
 
-      {/* Edit dialog */}
+      {/* Edit Role Dialog */}
       <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Edit User Role</DialogTitle>
+            <DialogTitle>Edit Role</DialogTitle>
           </DialogHeader>
           {editUser && (
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-zinc-700">
-                  {editUser.username}
-                </p>
+                <p className="text-sm font-medium text-zinc-200">{editUser.username}</p>
                 <p className="text-xs text-zinc-500">{editUser.email}</p>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700">
-                  Role
-                </label>
+                <label className="text-sm font-medium text-zinc-300">Role</label>
                 <Select value={editRole} onValueChange={setEditRole}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="candidate">Candidate</SelectItem>
                     <SelectItem value="examiner">Examiner</SelectItem>
@@ -270,16 +208,10 @@ export default function UsersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setEditUser(null)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Save"
-                  )}
+              <div className="flex gap-2 pt-1">
+                <Button variant="outline" className="flex-1" onClick={() => setEditUser(null)}>Cancel</Button>
+                <Button className="flex-1" onClick={handleSaveRole} disabled={saving || editRole === editUser.role}>
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
                 </Button>
               </div>
             </div>

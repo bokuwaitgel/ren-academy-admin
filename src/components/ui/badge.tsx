@@ -3,21 +3,20 @@ import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors",
+  "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition-colors",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-zinc-900 text-white dark:bg-white dark:text-zinc-900",
-        secondary: "border-transparent bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100",
-        destructive: "border-transparent bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-        outline: "text-zinc-700 dark:text-zinc-300",
-        success: "border-transparent bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-        warning: "border-transparent bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+        default:     "border-zinc-700 bg-zinc-800 text-zinc-100",
+        secondary:   "border-zinc-700 bg-zinc-800/50 text-zinc-400",
+        destructive: "border-red-900 bg-red-950/50 text-red-400",
+        outline:     "border-zinc-600 text-zinc-300 bg-transparent",
+        success:     "border-emerald-900 bg-emerald-950/50 text-emerald-400",
+        warning:     "border-amber-900 bg-amber-950/50 text-amber-400",
+        indigo:      "border-indigo-900 bg-indigo-950/50 text-indigo-400",
       },
     },
-    defaultVariants: {
-      variant: "default",
-    },
+    defaultVariants: { variant: "default" },
   }
 );
 

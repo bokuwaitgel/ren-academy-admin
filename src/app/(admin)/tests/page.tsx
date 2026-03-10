@@ -1,163 +1,225 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { tests as tApi, type Test, type Paginated } from "@/lib/api";
+import {
+  tests as tApi, questions as qApi, type Test, type Paginated,
+} from "@/lib/api";
+import TestModulesEditor, { type TestModules } from "@/components/sections-editor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Trash2,
-  Eye,
-  Globe,
-  GlobeLock,
+  Plus, Eye, Trash2, Globe, EyeOff, Loader2,
+  ChevronLeft, ChevronRight, Pencil,
+  Headphones, BookOpen, PenLine, Mic2,
 } from "lucide-react";
+
+function truncate(s: string, n = 50) { return s.length > n ? s.slice(0, n) + "…" : s; }
+
+const EMPTY_MODULES: TestModules = {};
+
+function modulesFromTest(t: Test): TestModules {
+  return {
+    listening: t.listening ? {
+      sections: t.listening.sections.map((s) => ({
+        section_number: s.section_number,
+        audio_url: s.audio_url,
+        question_ids: s.question_ids,
+      })),
+    } : undefined,
+    reading: t.reading ? {
+      sections: t.reading.sections.map((s) => ({
+        section_number: s.section_number,
+        passage: s.passage,
+        question_ids: s.question_ids,
+      })),
+    } : undefined,
+    writing: t.writing ? {
+      tasks: t.writing.tasks.map((task) => ({
+        task_number: task.task_number,
+        description: task.description,
+        image_url: task.image_url,
+      })),
+    } : undefined,
+    speaking: t.speaking ? {
+      parts: t.speaking.parts.map((p) => ({
+        part_number: p.part_number,
+        question_ids: p.question_ids,
+      })),
+    } : undefined,
+  };
+}
+
+function ModuleBadges({ t }: { t: Test }) {
+  return (
+    <div className="flex gap-1 flex-wrap">
+      {t.listening && <span className="rounded border border-indigo-800 bg-indigo-950 px-1.5 py-0.5 text-[10px] font-medium text-indigo-300"><Headphones className="inline h-2.5 w-2.5 mr-0.5" />L</span>}
+      {t.reading   && <span className="rounded border border-emerald-800 bg-emerald-950 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300"><BookOpen className="inline h-2.5 w-2.5 mr-0.5" />R</span>}
+      {t.writing   && <span className="rounded border border-amber-800 bg-amber-950 px-1.5 py-0.5 text-[10px] font-medium text-amber-300"><PenLine className="inline h-2.5 w-2.5 mr-0.5" />W</span>}
+      {t.speaking  && <span className="rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-300"><Mic2 className="inline h-2.5 w-2.5 mr-0.5" />S</span>}
+    </div>
+  );
+}
 
 export default function TestsPage() {
   const [data, setData] = useState<Paginated<Test> | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [publishedFilter, setPublishedFilter] = useState("all");
-
-  // View dialog
+  const [pubFilter, setPubFilter] = useState("all");
   const [viewTest, setViewTest] = useState<Test | null>(null);
-
-  // Toggling publish
-  const [toggling, setToggling] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
-
-  // Create dialog
-  const [showCreate, setShowCreate] = useState(false);
-  const [newTest, setNewTest] = useState({
-    title: "",
-    description: "",
-    test_type: "ielts",
-    module_type: "academic",
-    time_limit_minutes: "164",
-    tags: "",
-    sections: '[{"section":"listening","section_part":"part_1","question_ids":["<id>"]}]',
-  });
+  const [viewQMeta, setViewQMeta] = useState<Record<string, { title: string; type: string }>>({});
+  const [viewQLoading, setViewQLoading] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [toggling, setToggling] = useState<string | null>(null);
+  const [createErr, setCreateErr] = useState("");
+  const [editTest, setEditTest] = useState<Test | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editErr, setEditErr] = useState("");
+  const [editForm, setEditForm] = useState({
+    title: "", description: "", module_type: "academic", tags: "",
+  });
+  const [editModules, setEditModules] = useState<TestModules>(EMPTY_MODULES);
 
-  const fetchTests = useCallback(async () => {
+  // Create form state
+  const [form, setForm] = useState({
+    title: "", description: "", module_type: "academic", tags: "",
+  });
+  const [createModules, setCreateModules] = useState<TestModules>(EMPTY_MODULES);
+
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string, string | number | boolean> = { page, page_size: 20 };
-      if (publishedFilter === "published") params.published_only = true;
-      setData(await tApi.list(params));
-    } catch {
-      /* ignore */
-    } finally {
-      setLoading(false);
-    }
-  }, [page, publishedFilter]);
+      if (pubFilter === "published") params.published_only = true;
+      const res = await tApi.list(params);
+      setData(res);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }, [page, pubFilter]);
 
+  useEffect(() => { load(); }, [load]);
+
+  // Fetch question titles whenever view dialog opens
   useEffect(() => {
-    fetchTests();
-  }, [fetchTests]);
+    if (!viewTest) return;
+    const ids = [
+      ...(viewTest.listening?.sections.flatMap((s) => s.question_ids) ?? []),
+      ...(viewTest.reading?.sections.flatMap((s) => s.question_ids) ?? []),
+      ...(viewTest.speaking?.parts.flatMap((p) => p.question_ids) ?? []),
+    ];
+    if (!ids.length) return;
+    setViewQLoading(true);
+    setViewQMeta({});
+    Promise.all(ids.map((id) => qApi.get(id).catch(() => null))).then((results) => {
+      const map: Record<string, { title: string; type: string }> = {};
+      results.forEach((q) => { if (q) map[q.id] = { title: q.title, type: q.type }; });
+      setViewQMeta(map);
+      setViewQLoading(false);
+    });
+  }, [viewTest]);
 
-  const handleTogglePublish = async (test: Test) => {
-    setToggling(test.id);
+  const handleCreate = async () => {
+    setCreateErr("");
+    setSaving(true);
     try {
-      await tApi.publish(test.id, !test.is_published);
-      fetchTests();
-    } catch {
-      /* ignore */
-    } finally {
-      setToggling(null);
-    }
+      await tApi.create({
+        title: form.title,
+        description: form.description || undefined,
+        module_type: form.module_type,
+        tags: form.tags ? form.tags.split(",").map(t => t.trim()) : [],
+        ...(createModules.listening ? { listening: createModules.listening } : {}),
+        ...(createModules.reading   ? { reading:   createModules.reading   } : {}),
+        ...(createModules.writing   ? { writing:   createModules.writing   } : {}),
+        ...(createModules.speaking  ? { speaking:  createModules.speaking  } : {}),
+      });
+      setCreating(false);
+      setForm({ title: "", description: "", module_type: "academic", tags: "" });
+      setCreateModules(EMPTY_MODULES);
+      load();
+    } catch (e: unknown) {
+      setCreateErr((e as { detail?: string })?.detail ?? "Failed to create test");
+    } finally { setSaving(false); }
+  };
+
+  const openEdit = (t: Test) => {
+    setEditErr("");
+    setEditForm({
+      title: t.title,
+      description: t.description ?? "",
+      module_type: t.module_type,
+      tags: t.tags.join(", "),
+    });
+    setEditModules(modulesFromTest(t));
+    setEditTest(t);
+  };
+
+  const handleUpdate = async () => {
+    if (!editTest) return;
+    setEditErr("");
+    setEditSaving(true);
+    try {
+      await tApi.update(editTest.id, {
+        title: editForm.title,
+        description: editForm.description || undefined,
+        module_type: editForm.module_type,
+        tags: editForm.tags ? editForm.tags.split(",").map(t => t.trim()) : [],
+        listening: editModules.listening ?? null,
+        reading:   editModules.reading   ?? null,
+        writing:   editModules.writing   ?? null,
+        speaking:  editModules.speaking  ?? null,
+      });
+      setEditTest(null);
+      load();
+    } catch (e: unknown) {
+      setEditErr((e as { detail?: string })?.detail ?? "Failed to update test");
+    } finally { setEditSaving(false); }
+  };
+
+  const handleTogglePublish = async (t: Test) => {
+    setToggling(t.id);
+    try {
+      await tApi.publish(t.id, !t.is_published);
+      load();
+    } catch (e) { console.error(e); }
+    finally { setToggling(null); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this test permanently?")) return;
-    setDeleting(id);
-    try {
-      await tApi.delete(id);
-      fetchTests();
-    } catch {
-      /* ignore */
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  const handleCreate = async () => {
-    setCreateError("");
-    setCreating(true);
-    try {
-      let parsedSections;
-      try {
-        parsedSections = JSON.parse(newTest.sections);
-      } catch {
-        setCreateError("Invalid JSON for sections");
-        setCreating(false);
-        return;
-      }
-      await tApi.create({
-        title: newTest.title,
-        description: newTest.description || undefined,
-        test_type: newTest.test_type,
-        module_type: newTest.module_type,
-        time_limit_minutes: parseInt(newTest.time_limit_minutes) || 164,
-        tags: newTest.tags.split(",").map((t) => t.trim()).filter(Boolean),
-        sections: parsedSections,
-      });
-      setShowCreate(false);
-      setNewTest({
-        title: "", description: "", test_type: "ielts", module_type: "academic",
-        time_limit_minutes: "164", tags: "",
-        sections: '[{"section":"listening","section_part":"part_1","question_ids":["<id>"]}]',
-      });
-      fetchTests();
-    } catch (err: unknown) {
-      const e = err as { detail?: string };
-      setCreateError(typeof e?.detail === "string" ? e.detail : "Failed to create test");
-    } finally {
-      setCreating(false);
-    }
+    if (!confirm("Delete this test?")) return;
+    setDeletingId(id);
+    try { await tApi.delete(id); load(); }
+    catch (e) { console.error(e); }
+    finally { setDeletingId(null); }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Tests</h1>
-          <p className="text-sm text-zinc-500">Manage exam papers and their publication</p>
+          <h1 className="text-xl font-bold text-zinc-100">Tests</h1>
+          <p className="text-sm text-zinc-500">{data?.total ?? 0} total tests</p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4" />
-          New Test
+        <Button onClick={() => setCreating(true)}>
+          <Plus className="h-4 w-4" /> New Test
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3">
-        <Select value={publishedFilter} onValueChange={(v) => { setPublishedFilter(v); setPage(1); }}>
+      {/* Filter */}
+      <div className="flex gap-3">
+        <Select value={pubFilter} onValueChange={(v) => { setPubFilter(v); setPage(1); }}>
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Status" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All tests</SelectItem>
-            <SelectItem value="published">Published only</SelectItem>
+            <SelectItem value="all">All Tests</SelectItem>
+            <SelectItem value="published">Published Only</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -167,87 +229,75 @@ export default function TestsPage() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-            </div>
-          ) : !data || data.items.length === 0 ? (
-            <div className="flex h-48 items-center justify-center text-sm text-zinc-400">
-              No tests found
+              <Loader2 className="h-6 w-6 animate-spin text-zinc-600" />
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Module</TableHead>
+                  <TableHead>Modules</TableHead>
                   <TableHead>Questions</TableHead>
-                  <TableHead>Duration</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.items.map((t) => (
+                {data?.items.map((t) => (
                   <TableRow key={t.id}>
-                    <TableCell className="font-medium max-w-[250px] truncate">
-                      {t.title}
-                    </TableCell>
-                    <TableCell className="text-xs capitalize text-zinc-500">
-                      {t.module_type.replace(/_/g, " ")}
-                    </TableCell>
-                    <TableCell className="text-sm text-zinc-600">
-                      {t.question_count}
-                    </TableCell>
-                    <TableCell className="text-sm text-zinc-500">
-                      {t.time_limit_minutes} min
-                    </TableCell>
+                    <TableCell className="font-medium text-zinc-200">{truncate(t.title)}</TableCell>
                     <TableCell>
-                      {t.is_published ? (
-                        <Badge variant="success">Published</Badge>
-                      ) : (
-                        <Badge variant="secondary">Draft</Badge>
-                      )}
+                      <Badge variant="secondary" className="capitalize">{t.module_type}</Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-zinc-500">
+                    <TableCell><ModuleBadges t={t} /></TableCell>
+                    <TableCell className="text-zinc-400">{t.question_count}</TableCell>
+                    <TableCell>
+                      <Badge variant={t.is_published ? "success" : "secondary"}>
+                        {t.is_published ? "Published" : "Draft"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-zinc-500 text-xs">
                       {new Date(t.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" title="View" onClick={() => setViewTest(t)}>
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(t)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setViewTest(t)}>
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          title={t.is_published ? "Unpublish" : "Publish"}
+                          variant="ghost" size="icon"
+                          className={t.is_published ? "text-amber-400 hover:bg-amber-950/30" : "text-emerald-400 hover:bg-emerald-950/30"}
                           onClick={() => handleTogglePublish(t)}
                           disabled={toggling === t.id}
                         >
-                          {toggling === t.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : t.is_published ? (
-                            <GlobeLock className="h-4 w-4 text-amber-500" />
-                          ) : (
-                            <Globe className="h-4 w-4 text-emerald-500" />
-                          )}
+                          {toggling === t.id
+                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                            : t.is_published ? <EyeOff className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Delete"
+                          variant="ghost" size="icon"
+                          className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
                           onClick={() => handleDelete(t.id)}
-                          disabled={deleting === t.id}
+                          disabled={deletingId === t.id}
                         >
-                          {deleting === t.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          )}
+                          {deletingId === t.id
+                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                            : <Trash2 className="h-4 w-4" />}
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
+                {!data?.items.length && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-32 text-center text-zinc-600">No tests found</TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}
@@ -256,132 +306,234 @@ export default function TestsPage() {
 
       {/* Pagination */}
       {data && data.total_pages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-500">
-            Page {data.page} of {data.total_pages} ({data.total} tests)
-          </span>
+        <div className="flex items-center justify-between text-sm text-zinc-500">
+          <span>Page {data.page} of {data.total_pages}</span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              <ChevronLeft className="h-4 w-4" /> Previous
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" disabled={page >= data.total_pages} onClick={() => setPage((p) => p + 1)}>
-              Next <ChevronRight className="h-4 w-4" />
+            <Button variant="outline" size="sm" disabled={page >= data.total_pages} onClick={() => setPage(p => p + 1)}>
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       )}
 
-      {/* View test detail */}
+      {/* View detail */}
       <Dialog open={!!viewTest} onOpenChange={() => setViewTest(null)}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Test Details</DialogTitle>
+            <DialogTitle>{viewTest?.title}</DialogTitle>
           </DialogHeader>
           {viewTest && (
-            <div className="space-y-4 text-sm">
-              <div>
-                <span className="font-medium text-zinc-700">Title:</span>{" "}
-                <span className="text-zinc-900">{viewTest.title}</span>
-              </div>
-              {viewTest.description && (
-                <div>
-                  <span className="font-medium text-zinc-700">Description:</span>
-                  <p className="mt-1 text-zinc-600">{viewTest.description}</p>
-                </div>
-              )}
+            <div className="space-y-3 text-sm">
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="capitalize">{viewTest.test_type}</Badge>
-                <Badge variant="secondary" className="capitalize">{viewTest.module_type.replace(/_/g, " ")}</Badge>
-                {viewTest.is_published ? <Badge variant="success">Published</Badge> : <Badge variant="secondary">Draft</Badge>}
+                <Badge variant={viewTest.is_published ? "success" : "secondary"}>
+                  {viewTest.is_published ? "Published" : "Draft"}
+                </Badge>
+                <Badge variant="secondary" className="capitalize">{viewTest.module_type}</Badge>
+                <ModuleBadges t={viewTest} />
+                {viewQLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-500 self-center" />}
               </div>
-              <div>
-                <span className="font-medium text-zinc-700">Sections:</span>
-                <div className="mt-2 space-y-2">
-                  {viewTest.sections.map((s, i) => (
-                    <div key={i} className="rounded-lg border border-zinc-200 p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="default" className="capitalize">{s.section}</Badge>
-                        <Badge variant="secondary">{s.section_part.replace(/_/g, " ")}</Badge>
-                        {s.time_limit_minutes && <span className="text-xs text-zinc-500">{s.time_limit_minutes} min</span>}
+              {viewTest.description && <p className="text-zinc-400">{viewTest.description}</p>}
+
+              {/* Helper: renders question list for a set of IDs */}
+              {(() => {
+                const QList = ({ ids }: { ids: string[] }) => (
+                  <div className="mt-1.5 space-y-1">
+                    {ids.map((id) => {
+                      const q = viewQMeta[id];
+                      return (
+                        <div key={id} className="flex items-center gap-2">
+                          <span className="h-1 w-1 rounded-full bg-zinc-600 shrink-0" />
+                          {q ? (
+                            <span className="text-zinc-300 truncate">{q.title}
+                              <span className="ml-1.5 text-zinc-600 text-[10px]">{q.type.replace(/_/g, " ")}</span>
+                            </span>
+                          ) : (
+                            <span className="text-zinc-600 italic">{id.slice(0, 10)}…</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+
+                return (
+                  <>
+                    {/* Listening */}
+                    {viewTest.listening && (
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold text-indigo-300 flex items-center gap-1.5"><Headphones className="h-3.5 w-3.5" /> Listening</p>
+                        <div className="space-y-1.5">
+                          {viewTest.listening.sections.map((s) => (
+                            <div key={s.section_number} className="rounded-md border border-indigo-900 bg-indigo-950/20 px-3 py-2 text-xs">
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium text-indigo-200">Section {s.section_number}</span>
+                                <span className="text-zinc-500">{s.question_ids.length} questions</span>
+                              </div>
+                              {s.audio_url && <p className="mt-0.5 text-zinc-500 truncate">{s.audio_url}</p>}
+                              {s.question_ids.length > 0 && <QList ids={s.question_ids} />}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <p className="text-xs text-zinc-500">{s.question_ids.length} question(s)</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {viewTest.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {viewTest.tags.map((tag) => <Badge key={tag} variant="secondary">{tag}</Badge>)}
-                </div>
-              )}
+                    )}
+
+                    {/* Reading */}
+                    {viewTest.reading && (
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold text-emerald-300 flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5" /> Reading</p>
+                        <div className="space-y-1.5">
+                          {viewTest.reading.sections.map((s) => (
+                            <div key={s.section_number} className="rounded-md border border-emerald-900 bg-emerald-950/20 px-3 py-2 text-xs">
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium text-emerald-200">Passage {s.section_number}</span>
+                                <span className="text-zinc-500">{s.question_ids.length} questions</span>
+                              </div>
+                              {s.passage && <p className="mt-0.5 text-zinc-600 line-clamp-2">{s.passage}</p>}
+                              {s.question_ids.length > 0 && <QList ids={s.question_ids} />}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Writing */}
+                    {viewTest.writing && (
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold text-amber-300 flex items-center gap-1.5"><PenLine className="h-3.5 w-3.5" /> Writing</p>
+                        <div className="space-y-1.5">
+                          {viewTest.writing.tasks.map((task) => (
+                            <div key={task.task_number} className="rounded-md border border-amber-900 bg-amber-950/20 px-3 py-2 text-xs">
+                              <p className="font-medium text-amber-200 mb-0.5">Task {task.task_number}</p>
+                              <p className="text-zinc-400 line-clamp-2">{task.description}</p>
+                              {task.image_url && <p className="mt-0.5 text-zinc-500 truncate">{task.image_url}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Speaking */}
+                    {viewTest.speaking && (
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold text-zinc-300 flex items-center gap-1.5"><Mic2 className="h-3.5 w-3.5" /> Speaking</p>
+                        <div className="space-y-1.5">
+                          {viewTest.speaking.parts.map((part) => (
+                            <div key={part.part_number} className="rounded-md border border-zinc-700 bg-zinc-800/40 px-3 py-2 text-xs">
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium text-zinc-200">Part {part.part_number}</span>
+                                <span className="text-zinc-500">{part.question_ids.length} questions</span>
+                              </div>
+                              {part.question_ids.length > 0 && <QList ids={part.question_ids} />}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+
+              <p className="text-xs text-zinc-600">ID: {viewTest.id}</p>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Create test dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto max-w-lg">
+      {/* Edit dialog */}
+      <Dialog open={!!editTest} onOpenChange={(open) => { if (!open) setEditTest(null); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Test</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {editErr && (
+              <div className="rounded border border-red-900 bg-red-950/50 p-3 text-sm text-red-400">{editErr}</div>
+            )}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-300">Title *</label>
+              <Input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} placeholder="IELTS Academic Test 1" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-300">Description</label>
+              <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-zinc-300">Module</label>
+                <Select value={editForm.module_type} onValueChange={v => setEditForm(f => ({ ...f, module_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="academic">Academic</SelectItem>
+                    <SelectItem value="general">General Training</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-300">Modules</label>
+              <TestModulesEditor modules={editModules} onChange={setEditModules} testId={editTest?.id} moduleType={editForm.module_type} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-zinc-300">Tags (comma-separated)</label>
+              <Input value={editForm.tags} onChange={e => setEditForm(f => ({ ...f, tags: e.target.value }))} placeholder="ielts, academic, 2024" />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1" onClick={() => setEditTest(null)}>Cancel</Button>
+              <Button className="flex-1" onClick={handleUpdate} disabled={editSaving || !editForm.title}>
+                {editSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create dialog */}
+      <Dialog open={creating} onOpenChange={setCreating}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create Test</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {createError && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{createError}</div>
+            {createErr && (
+              <div className="rounded border border-red-900 bg-red-950/50 p-3 text-sm text-red-400">{createErr}</div>
             )}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Title</label>
-              <Input value={newTest.title} onChange={(e) => setNewTest({ ...newTest, title: e.target.value })} />
+              <label className="text-sm font-medium text-zinc-300">Title *</label>
+              <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="IELTS Academic Test 1" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Description</label>
-              <textarea
-                className="flex w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400"
-                rows={2}
-                value={newTest.description}
-                onChange={(e) => setNewTest({ ...newTest, description: e.target.value })}
-              />
+              <label className="text-sm font-medium text-zinc-300">Description</label>
+              <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">Module</label>
-                <Select value={newTest.module_type} onValueChange={(v) => setNewTest({ ...newTest, module_type: v })}>
+                <label className="text-sm font-medium text-zinc-300">Module</label>
+                <Select value={form.module_type} onValueChange={v => setForm(f => ({ ...f, module_type: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="academic">Academic</SelectItem>
-                    <SelectItem value="general_training">General Training</SelectItem>
+                    <SelectItem value="general">General Training</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Time Limit (min)</label>
-                <Input
-                  type="number"
-                  value={newTest.time_limit_minutes}
-                  onChange={(e) => setNewTest({ ...newTest, time_limit_minutes: e.target.value })}
-                />
-              </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Sections (JSON array)</label>
-              <textarea
-                className="flex w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-xs font-mono shadow-sm placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400"
-                rows={5}
-                value={newTest.sections}
-                onChange={(e) => setNewTest({ ...newTest, sections: e.target.value })}
-              />
-              <p className="text-xs text-zinc-400">
-                Each section: {`{"section":"listening","section_part":"part_1","question_ids":["..."]}`}
-              </p>
+              <label className="text-sm font-medium text-zinc-300">Modules</label>
+              <TestModulesEditor modules={createModules} onChange={setCreateModules} moduleType={form.module_type} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Tags (comma-separated)</label>
-              <Input value={newTest.tags} onChange={(e) => setNewTest({ ...newTest, tags: e.target.value })} placeholder="mock, practice" />
+              <label className="text-sm font-medium text-zinc-300">Tags (comma-separated)</label>
+              <Input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="ielts, academic, 2024" />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-              <Button onClick={handleCreate} disabled={creating}>
-                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
+            <div className="flex gap-2 pt-1">
+              <DialogClose asChild>
+                <Button variant="outline" className="flex-1">Cancel</Button>
+              </DialogClose>
+              <Button className="flex-1" onClick={handleCreate} disabled={saving || !form.title}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create Test"}
               </Button>
             </div>
           </div>
