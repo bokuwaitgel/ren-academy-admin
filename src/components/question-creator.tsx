@@ -165,6 +165,12 @@ interface QuestionFormData {
   tfng_items: { statement: string; answer: string }[];
   // Pick from list
   pick_items: { question: string; answers: string[] }[];
+  // Speaking sub-questions
+  speaking_questions: string[];
+  // Cue Card (Part 2)
+  cue_card_topic: string;
+  cue_card_bullets: string[];
+  cue_card_follow_up: string;
 }
 
 const defaultForm: QuestionFormData = {
@@ -201,6 +207,10 @@ const defaultForm: QuestionFormData = {
   heading_items: [{ paragraph_label: "Paragraph A", answer: "" }],
   tfng_items: [{ statement: "", answer: "TRUE" }],
   pick_items: [{ question: "", answers: [] }],
+  speaking_questions: [""],
+  cue_card_topic: "",
+  cue_card_bullets: [""],
+  cue_card_follow_up: "",
 };
 
 const STEPS = [
@@ -247,6 +257,12 @@ function questionToForm(q: Question): QuestionFormData {
     heading_items: (q.heading_items as QuestionFormData["heading_items"]) ?? defaultForm.heading_items,
     tfng_items: (q.tfng_items as QuestionFormData["tfng_items"]) ?? defaultForm.tfng_items,
     pick_items: (q.pick_items as QuestionFormData["pick_items"]) ?? defaultForm.pick_items,
+    speaking_questions: (q.speaking_questions as { question: string }[] | undefined)?.map((i) => i.question) ?? [""],
+    cue_card_topic: (q.cue_card as { topic?: string } | undefined)?.topic ?? "",
+    cue_card_bullets: (q.cue_card as { bullet_points?: string[] } | undefined)?.bullet_points?.length
+      ? (q.cue_card as { bullet_points: string[] }).bullet_points
+      : [""],
+    cue_card_follow_up: (q.cue_card as { follow_up?: string } | undefined)?.follow_up ?? "",
   };
 }
 
@@ -473,6 +489,20 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
     }
     if (t === "pick_from_list") {
       base.pick_items = form.pick_items;
+    }
+    if (t === "speaking_interview" || t === "speaking_discussion") {
+      const qs = form.speaking_questions.filter((q) => q.trim());
+      if (qs.length > 0) base.speaking_questions = qs.map((q) => ({ question: q, follow_ups: [], sample_answer: null, band_tip: null }));
+    }
+    if (t === "speaking_cue_card") {
+      const bullets = form.cue_card_bullets.filter((b) => b.trim());
+      base.cue_card = {
+        topic: form.cue_card_topic.trim(),
+        bullet_points: bullets,
+        follow_up: form.cue_card_follow_up.trim() || null,
+        prep_time_seconds: 60,
+        speak_time_seconds: 120,
+      };
     }
     return base;
   };
@@ -1040,21 +1070,21 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
           {form.form_fields.map((f, i) => (
             <div key={i} className="flex items-end gap-2 rounded-lg border border-zinc-200 p-3">
               <div className="flex-1 space-y-1">
-                <label className="text-[10px] font-medium text-zinc-400 uppercase">Label</label>
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Label</label>
                 <Input placeholder="Full name" value={f.label} onChange={(e) => {
                   const nf = [...form.form_fields]; nf[i] = { ...nf[i], label: e.target.value };
                   updateForm({ form_fields: nf });
                 }} />
               </div>
               <div className="w-16 space-y-1">
-                <label className="text-[10px] font-medium text-zinc-400 uppercase">Prefix</label>
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Prefix</label>
                 <Input placeholder="£" value={f.prefix} onChange={(e) => {
                   const nf = [...form.form_fields]; nf[i] = { ...nf[i], prefix: e.target.value };
                   updateForm({ form_fields: nf });
                 }} />
               </div>
               <div className="flex-1 space-y-1">
-                <label className="text-[10px] font-medium text-zinc-400 uppercase">Answer</label>
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Answer</label>
                 <div className="rounded-md bg-amber-50 border border-amber-200 px-2">
                   <Input
                     className="border-0 bg-transparent p-0 h-9 text-amber-800 font-semibold focus-visible:ring-0"
@@ -1357,21 +1387,21 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
           {form.table_cells.map((c, i) => (
             <div key={i} className="rounded-lg border border-zinc-200 p-3 grid grid-cols-3 gap-2">
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-zinc-400 uppercase">Row Header</label>
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Row Header</label>
                 <Input placeholder="Monday" value={c.row_header} onChange={(e) => {
                   const nc = [...form.table_cells]; nc[i] = { ...nc[i], row_header: e.target.value };
                   updateForm({ table_cells: nc });
                 }} />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-zinc-400 uppercase">Col Header</label>
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Col Header</label>
                 <Input placeholder="Time" value={c.col_header} onChange={(e) => {
                   const nc = [...form.table_cells]; nc[i] = { ...nc[i], col_header: e.target.value };
                   updateForm({ table_cells: nc });
                 }} />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-zinc-400 uppercase">Answer</label>
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Answer</label>
                 <div className="rounded-md bg-amber-50 border border-amber-200 px-2">
                   <Input className="border-0 bg-transparent p-0 h-9 text-amber-800 font-semibold focus-visible:ring-0" placeholder="9:00 AM"
                     value={c.answer} onChange={(e) => {
@@ -1471,21 +1501,21 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
           {form.map_slots.map((s, i) => (
             <div key={i} className="rounded-lg border border-zinc-200 p-3 grid grid-cols-3 gap-2">
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-zinc-400 uppercase">Label</label>
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Label</label>
                 <Input value={s.slot_label} onChange={(e) => {
                   const ns = [...form.map_slots]; ns[i] = { ...ns[i], slot_label: e.target.value };
                   updateForm({ map_slots: ns });
                 }} />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-zinc-400 uppercase">Position</label>
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Position</label>
                 <Input placeholder="top-center" value={s.position} onChange={(e) => {
                   const ns = [...form.map_slots]; ns[i] = { ...ns[i], position: e.target.value };
                   updateForm({ map_slots: ns });
                 }} />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-zinc-400 uppercase">Answer</label>
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Answer</label>
                 <div className="rounded-md bg-amber-50 border border-amber-200 px-2">
                   <Input className="border-0 bg-transparent p-0 h-9 text-amber-800 font-semibold focus-visible:ring-0"
                     value={s.answer} onChange={(e) => {
@@ -1617,6 +1647,135 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
           }}>
             <Plus className="h-3.5 w-3.5 mr-1" /> Add Question
           </Button>
+        </div>
+      );
+    }
+
+    // ── Speaking Cue Card (Part 2) ────────────────────────
+    if (t === "speaking_cue_card") {
+      return (
+        <div className="space-y-5">
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-center">
+            <p className="text-sm text-zinc-500">No specific answer configuration for this question type.</p>
+            <p className="text-xs text-zinc-400 mt-0.5">You can proceed to review.</p>
+          </div>
+          {/* Topic */}
+          <div className="space-y-2">
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-900">Cue Card Topic</h3>
+              <p className="text-xs text-zinc-500 mt-0.5">The main topic the candidate should talk about</p>
+            </div>
+            <Input
+              value={form.cue_card_topic}
+              placeholder="e.g. Describe a place you have visited that you particularly liked."
+              onChange={(e) => updateForm({ cue_card_topic: e.target.value })}
+            />
+          </div>
+          {/* Bullet points */}
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-900">Bullet Points</h3>
+              <p className="text-xs text-zinc-500 mt-0.5">List the guiding bullet points on the cue card</p>
+            </div>
+            {(form.cue_card_bullets ?? [""]).map((b, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-400 w-5 shrink-0">•</span>
+                <Input
+                  className="flex-1"
+                  value={b}
+                  placeholder="e.g. where you went"
+                  onChange={(e) => {
+                    const updated = [...(form.cue_card_bullets ?? [""])];
+                    updated[i] = e.target.value;
+                    updateForm({ cue_card_bullets: updated });
+                  }}
+                />
+                {(form.cue_card_bullets ?? [""]).length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => updateForm({ cue_card_bullets: (form.cue_card_bullets ?? [""]).filter((_, j) => j !== i) })}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => updateForm({ cue_card_bullets: [...(form.cue_card_bullets ?? [""]), ""] })}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add Bullet Point
+            </Button>
+          </div>
+          {/* Follow-up */}
+          <div className="space-y-2">
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-900">Follow-up Question <span className="text-zinc-400 font-normal">(optional)</span></h3>
+              <p className="text-xs text-zinc-500 mt-0.5">Question asked after the candidate finishes speaking</p>
+            </div>
+            <Input
+              value={form.cue_card_follow_up}
+              placeholder="e.g. Would you like to visit it again?"
+              onChange={(e) => updateForm({ cue_card_follow_up: e.target.value })}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // ── Speaking Interview / Discussion ───────────────────
+    if (t === "speaking_interview" || t === "speaking_discussion") {
+      const labels = {
+        speaking_interview: { title: "Interview Questions", sub: "List the questions the examiner will ask (Part 1)", placeholder: "e.g. Do you work or study?" },
+        speaking_discussion: { title: "Discussion Questions", sub: "List the follow-up discussion questions (Part 3)", placeholder: "e.g. Why do people enjoy travelling?" },
+      }[t];
+      return (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-center">
+            <p className="text-sm text-zinc-500">No specific answer configuration for this question type.</p>
+            <p className="text-xs text-zinc-400 mt-0.5">You can proceed to review.</p>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-900">{labels.title}</h3>
+              <p className="text-xs text-zinc-500 mt-0.5">{labels.sub}</p>
+            </div>
+            {(form.speaking_questions ?? [""]).map((q, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-400 w-5 shrink-0">{i + 1}.</span>
+                <Input
+                  className="flex-1"
+                  value={q}
+                  placeholder={labels.placeholder}
+                  onChange={(e) => {
+                    const updated = [...(form.speaking_questions ?? [""])];
+                    updated[i] = e.target.value;
+                    updateForm({ speaking_questions: updated });
+                  }}
+                />
+                {(form.speaking_questions ?? [""]).length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => updateForm({ speaking_questions: (form.speaking_questions ?? [""]).filter((_, j) => j !== i) })}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => updateForm({ speaking_questions: [...(form.speaking_questions ?? [""]), ""] })}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add Question
+            </Button>
+          </div>
         </div>
       );
     }
@@ -1832,6 +1991,43 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              {(form.type === "speaking_interview" || form.type === "speaking_discussion") && (
+                <div className="space-y-1">
+                  {(form.speaking_questions ?? []).filter((q) => q.trim()).length > 0 ? (
+                    (form.speaking_questions ?? []).filter((q) => q.trim()).map((q, i) => (
+                      <div key={i} className="flex items-start gap-2 text-sm">
+                        <span className="text-zinc-400 text-xs w-5 shrink-0 pt-0.5">{i + 1}.</span>
+                        <span className="text-zinc-600">{q}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-zinc-400 italic">No questions added</p>
+                  )}
+                </div>
+              )}
+              {form.type === "speaking_cue_card" && (
+                <div className="space-y-2">
+                  {form.cue_card_topic.trim() && (
+                    <p className="text-sm text-zinc-700 font-medium">{form.cue_card_topic}</p>
+                  )}
+                  {(form.cue_card_bullets ?? []).filter((b) => b.trim()).length > 0 && (
+                    <ul className="space-y-0.5 pl-2">
+                      {(form.cue_card_bullets ?? []).filter((b) => b.trim()).map((b, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-zinc-600">
+                          <span className="text-zinc-400 shrink-0">•</span>
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {form.cue_card_follow_up.trim() && (
+                    <p className="text-xs text-zinc-500 italic">Follow-up: {form.cue_card_follow_up}</p>
+                  )}
+                  {!form.cue_card_topic.trim() && (form.cue_card_bullets ?? []).filter((b) => b.trim()).length === 0 && (
+                    <p className="text-xs text-zinc-400 italic">No cue card content added</p>
+                  )}
                 </div>
               )}
             </div>

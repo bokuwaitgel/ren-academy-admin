@@ -33,10 +33,15 @@ async function request<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw { detail: `Network error — could not reach ${API_BASE}`, status: 0 } as ApiError;
+  }
 
   if (!res.ok) {
     let detail: string | Record<string, unknown> = res.statusText;

@@ -97,6 +97,7 @@ export default function QuestionsPage() {
   const [editQ, setEditQ] = useState<Question | null>(null);
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
   const [groupByTypeEnabled, setGroupByTypeEnabled] = useState(false);
 
   const load = useCallback(async () => {
@@ -124,6 +125,15 @@ export default function QuestionsPage() {
     setActivePart(part);
     setPage(1);
     setSearch("");
+  };
+
+  const handleEdit = async (q: Question) => {
+    setLoadingEditId(q.id);
+    try {
+      const full = await qApi.get(q.id);
+      setEditQ(full);
+    } catch (e) { console.error(e); }
+    finally { setLoadingEditId(null); }
   };
 
   const handleDelete = async (id: string) => {
@@ -249,7 +259,22 @@ export default function QuestionsPage() {
                     <TableBody>
                       {questions.map((q) => (
                         <TableRow key={q.id}>
-                          <TableCell className="max-w-xs font-medium text-zinc-200">{truncate(q.title)}</TableCell>
+                          <TableCell className="max-w-xs">
+                            <p className="font-medium text-zinc-200">{truncate(q.title)}</p>
+                            {q.type === "speaking_cue_card" && (q.cue_card as { bullet_points?: string[] } | undefined)?.bullet_points?.length ? (
+                              <ul className="mt-1 space-y-0.5 pl-3">
+                                {(q.cue_card as { bullet_points: string[] }).bullet_points.map((b, idx) => (
+                                  <li key={idx} className="text-zinc-500 text-xs truncate list-disc">{b}</li>
+                                ))}
+                              </ul>
+                            ) : q.section === "speaking" && ((q.speaking_questions as { question: string }[] | undefined)?.filter((i) => i.question?.trim()).length ?? 0) > 0 && (
+                              <ol className="mt-1 space-y-0.5 list-decimal list-inside">
+                                {(q.speaking_questions as { question: string }[]).filter((i) => i.question?.trim()).map((item, idx) => (
+                                  <li key={idx} className="text-zinc-500 text-xs truncate">{item.question}</li>
+                                ))}
+                              </ol>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <Badge variant="secondary" className="capitalize">{q.module_type}</Badge>
                           </TableCell>
@@ -257,7 +282,9 @@ export default function QuestionsPage() {
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="icon" onClick={() => setViewQ(q)}><Eye className="h-4 w-4" /></Button>
-                              <Button variant="ghost" size="icon" onClick={() => setEditQ(q)}><Pencil className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleEdit(q)} disabled={loadingEditId === q.id}>
+                                {loadingEditId === q.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
+                              </Button>
                               <Button variant="ghost" size="icon"
                                 className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
                                 onClick={() => handleDelete(q.id)} disabled={deletingId === q.id}>
@@ -286,8 +313,21 @@ export default function QuestionsPage() {
               <TableBody>
                 {data?.items.map((q) => (
                   <TableRow key={q.id}>
-                    <TableCell className="max-w-xs font-medium text-zinc-200">
-                      {truncate(q.title)}
+                    <TableCell className="max-w-xs">
+                      <p className="font-medium text-zinc-200">{truncate(q.title)}</p>
+                      {q.type === "speaking_cue_card" && (q.cue_card as { bullet_points?: string[] } | undefined)?.bullet_points?.length ? (
+                        <ul className="mt-1 space-y-0.5 pl-3">
+                          {(q.cue_card as { bullet_points: string[] }).bullet_points.map((b, idx) => (
+                            <li key={idx} className="text-zinc-500 text-xs truncate list-disc">{b}</li>
+                          ))}
+                        </ul>
+                      ) : q.section === "speaking" && ((q.speaking_questions as { question: string }[] | undefined)?.filter((i) => i.question?.trim()).length ?? 0) > 0 && (
+                        <ol className="mt-1 space-y-0.5 list-decimal list-inside">
+                          {(q.speaking_questions as { question: string }[]).filter((i) => i.question?.trim()).map((item, idx) => (
+                            <li key={idx} className="text-zinc-500 text-xs truncate">{item.question}</li>
+                          ))}
+                        </ol>
+                      )}
                     </TableCell>
                     <TableCell className="text-zinc-400 text-xs">{q.type.replace(/_/g, " ")}</TableCell>
                     <TableCell>
@@ -301,8 +341,8 @@ export default function QuestionsPage() {
                         <Button variant="ghost" size="icon" onClick={() => setViewQ(q)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setEditQ(q)}>
-                          <Pencil className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(q)} disabled={loadingEditId === q.id}>
+                          {loadingEditId === q.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
                         </Button>
                         <Button
                           variant="ghost" size="icon"
@@ -353,47 +393,341 @@ export default function QuestionsPage() {
           <DialogHeader>
             <DialogTitle>{viewQ?.title}</DialogTitle>
           </DialogHeader>
-          {viewQ && (
-            <div className="space-y-3 text-sm">
-              <div className="flex flex-wrap gap-2">
-                <Badge variant={sectionVariant[viewQ.section] ?? "secondary"} className="capitalize">{viewQ.section}</Badge>
-                <Badge variant="secondary">{viewQ.type.replace(/_/g, " ")}</Badge>
-                <Badge variant="secondary" className="capitalize">{viewQ.module_type}</Badge>
-              </div>
-              {viewQ.instruction && (
-                <div>
-                  <p className="mb-1 text-xs font-medium text-zinc-500">Instruction</p>
-                  <p className="text-zinc-300">{viewQ.instruction}</p>
+          {viewQ && (() => {
+            const q = viewQ as Record<string, unknown>;
+            const formFields = q.form_fields as { label: string; prefix: string; answer: string }[] | undefined;
+            const tableCells = q.table_cells as { row_header: string; col_header: string; answer: string }[] | undefined;
+            const flowSteps = q.flow_steps as { step_number: number; description: string; answer: string; is_blank: boolean }[] | undefined;
+            const sentences = q.sentences as { before: string; after: string; answer: string }[] | undefined;
+            const summaryItems = q.summary_items as { before: string; after: string; answer: string; word_options: string }[] | undefined;
+            const shortItems = q.short_items as { question: string; answer: string }[] | undefined;
+            const mapWordBox = q.map_word_box as string[] | undefined;
+            const mapSlots = q.map_slots as { slot_label: string; position: string; answer: string }[] | undefined;
+            const matchingItems = q.matching_items as { item: string; answer: string }[] | undefined;
+            const headingOptions = q.heading_options as { label: string; text: string }[] | undefined;
+            const headingItems = q.heading_items as { paragraph_label: string; answer: string }[] | undefined;
+            const tfngItems = q.tfng_items as { statement: string; answer: string }[] | undefined;
+            const pickItems = q.pick_items as { question: string; answers: string[] }[] | undefined;
+            const writingPrompt = q.writing_prompt as { prompt: string; word_limit: number; time_limit_mins: number; chart_type?: string; letter_type?: string; letter_situation?: string } | undefined;
+            const cueCard = q.cue_card as { topic: string; bullet_points: string[]; follow_up?: string; prep_time_seconds: number; speak_time_seconds: number } | undefined;
+            const speakingQuestions = q.speaking_questions as { question: string }[] | undefined;
+            return (
+              <div className="space-y-3 text-sm">
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant={sectionVariant[viewQ.section] ?? "secondary"} className="capitalize">{viewQ.section}</Badge>
+                  <Badge variant="outline" className="capitalize text-zinc-400">{viewQ.section_part.replace(/_/g, " ")}</Badge>
+                  <Badge variant="secondary">{viewQ.type.replace(/_/g, " ")}</Badge>
+                  <Badge variant="secondary" className="capitalize">{viewQ.module_type}</Badge>
                 </div>
-              )}
-              {viewQ.passage && (
-                <div>
-                  <p className="mb-1 text-xs font-medium text-zinc-500">Passage</p>
-                  <p className="max-h-40 overflow-y-auto text-zinc-400 text-xs leading-relaxed">{viewQ.passage}</p>
-                </div>
-              )}
-              {viewQ.options && (
-                <div>
-                  <p className="mb-1 text-xs font-medium text-zinc-500">Options</p>
-                  <div className="space-y-1">
-                    {viewQ.options.map((o) => (
-                      <div key={o.label} className={`flex gap-2 rounded px-2 py-1 text-xs ${o.label === viewQ.correct_option ? "bg-emerald-950/50 text-emerald-300" : "text-zinc-400"}`}>
-                        <span className="font-bold">{o.label}.</span> {o.text}
+
+                {/* Context */}
+                {viewQ.context && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Context</p>
+                    <p className="text-zinc-400 text-xs leading-relaxed">{viewQ.context}</p>
+                  </div>
+                )}
+
+                {/* Instruction */}
+                {viewQ.instruction && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Instruction</p>
+                    <p className="text-zinc-300">{viewQ.instruction}</p>
+                  </div>
+                )}
+
+                {/* Audio */}
+                {viewQ.audio_url && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Audio</p>
+                    <audio controls src={viewQ.audio_url} className="w-full h-8" />
+                  </div>
+                )}
+
+                {/* Image */}
+                {viewQ.image_url && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Image</p>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={viewQ.image_url} alt="question" className="max-h-48 rounded border border-zinc-700 object-contain" />
+                  </div>
+                )}
+
+                {/* Passage */}
+                {viewQ.passage && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Passage</p>
+                    <p className="max-h-40 overflow-y-auto text-zinc-400 text-xs leading-relaxed whitespace-pre-wrap">{viewQ.passage}</p>
+                  </div>
+                )}
+
+                {/* MCQ options */}
+                {viewQ.options && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Options</p>
+                    <div className="space-y-1">
+                      {viewQ.options.map((o) => {
+                        const isCorrect = viewQ.correct_option
+                          ? o.label === viewQ.correct_option
+                          : (viewQ.correct_options as string[] | undefined)?.includes(o.label);
+                        return (
+                          <div key={o.label} className={`flex gap-2 rounded px-2 py-1 text-xs ${isCorrect ? "bg-emerald-950/50 text-emerald-300" : "text-zinc-400"}`}>
+                            <span className="font-bold">{o.label}.</span> {o.text}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sentences / Note completion */}
+                {sentences && sentences.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Sentences</p>
+                    <div className="space-y-1">
+                      {sentences.map((s, i) => (
+                        <div key={i} className="text-xs text-zinc-300">
+                          {s.before} <span className="rounded bg-emerald-950/50 text-emerald-300 px-1">{s.answer}</span> {s.after}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Summary completion */}
+                {summaryItems && summaryItems.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Summary Items</p>
+                    <div className="space-y-1">
+                      {summaryItems.map((s, i) => (
+                        <div key={i} className="text-xs text-zinc-300">
+                          {s.before} <span className="rounded bg-emerald-950/50 text-emerald-300 px-1">{s.answer}</span> {s.after}
+                          {s.word_options && <span className="ml-2 text-zinc-500">({s.word_options})</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Form completion */}
+                {formFields && formFields.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Form Fields</p>
+                    <div className="rounded border border-zinc-700 overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead><tr className="border-b border-zinc-700 bg-zinc-800/50"><th className="px-2 py-1 text-left text-zinc-400">Label</th><th className="px-2 py-1 text-left text-zinc-400">Prefix</th><th className="px-2 py-1 text-left text-emerald-400">Answer</th></tr></thead>
+                        <tbody>
+                          {formFields.map((f, i) => (
+                            <tr key={i} className="border-b border-zinc-800 last:border-0">
+                              <td className="px-2 py-1 text-zinc-300">{f.label}</td>
+                              <td className="px-2 py-1 text-zinc-400">{f.prefix}</td>
+                              <td className="px-2 py-1 text-emerald-300">{f.answer}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Table completion */}
+                {tableCells && tableCells.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Table Cells</p>
+                    <div className="rounded border border-zinc-700 overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead><tr className="border-b border-zinc-700 bg-zinc-800/50"><th className="px-2 py-1 text-left text-zinc-400">Row</th><th className="px-2 py-1 text-left text-zinc-400">Column</th><th className="px-2 py-1 text-left text-emerald-400">Answer</th></tr></thead>
+                        <tbody>
+                          {tableCells.map((c, i) => (
+                            <tr key={i} className="border-b border-zinc-800 last:border-0">
+                              <td className="px-2 py-1 text-zinc-300">{c.row_header}</td>
+                              <td className="px-2 py-1 text-zinc-400">{c.col_header}</td>
+                              <td className="px-2 py-1 text-emerald-300">{c.answer}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Flow chart */}
+                {flowSteps && flowSteps.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Flow Steps</p>
+                    <div className="space-y-1">
+                      {flowSteps.map((s, i) => (
+                        <div key={i} className="flex gap-2 text-xs text-zinc-300">
+                          <span className="text-zinc-500 w-4 shrink-0">{s.step_number}.</span>
+                          <span>{s.description}</span>
+                          {s.is_blank && <span className="rounded bg-emerald-950/50 text-emerald-300 px-1 ml-auto shrink-0">{s.answer}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Short answer */}
+                {shortItems && shortItems.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Short Answer Items</p>
+                    <div className="space-y-1">
+                      {shortItems.map((s, i) => (
+                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-zinc-800/50">
+                          <span className="text-zinc-300">{s.question}</span>
+                          <span className="text-emerald-300 shrink-0">{s.answer}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Map/Plan/Diagram */}
+                {mapSlots && mapSlots.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Map Slots</p>
+                    {mapWordBox && mapWordBox.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {mapWordBox.map((w, i) => <span key={i} className="rounded border border-zinc-600 px-1.5 py-0.5 text-xs text-zinc-400">{w}</span>)}
                       </div>
+                    )}
+                    <div className="space-y-1">
+                      {mapSlots.map((s, i) => (
+                        <div key={i} className="flex gap-3 text-xs">
+                          <span className="text-zinc-500 font-bold w-4 shrink-0">{s.slot_label}</span>
+                          <span className="text-zinc-400">{s.position}</span>
+                          <span className="text-emerald-300 ml-auto shrink-0">{s.answer}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Matching */}
+                {matchingItems && matchingItems.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Matching Items</p>
+                    <div className="space-y-1">
+                      {matchingItems.map((m, i) => (
+                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-zinc-800/50">
+                          <span className="text-zinc-300">{m.item}</span>
+                          <span className="text-emerald-300 shrink-0">{m.answer}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Matching headings */}
+                {headingItems && headingItems.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Heading Items</p>
+                    {headingOptions && headingOptions.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {headingOptions.map((h) => <span key={h.label} className="rounded border border-zinc-600 px-1.5 py-0.5 text-xs text-zinc-400"><b>{h.label}</b> {h.text}</span>)}
+                      </div>
+                    )}
+                    <div className="space-y-1">
+                      {headingItems.map((h, i) => (
+                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-zinc-800/50">
+                          <span className="text-zinc-300">Paragraph {h.paragraph_label}</span>
+                          <span className="text-emerald-300 shrink-0">{h.answer}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* TFNG */}
+                {tfngItems && tfngItems.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Statements</p>
+                    <div className="space-y-1">
+                      {tfngItems.map((t, i) => (
+                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-zinc-800/50">
+                          <span className="text-zinc-300">{t.statement}</span>
+                          <span className={`shrink-0 font-medium ${t.answer === "TRUE" || t.answer === "YES" ? "text-emerald-300" : t.answer === "FALSE" || t.answer === "NO" ? "text-red-400" : "text-yellow-400"}`}>{t.answer}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pick from list */}
+                {pickItems && pickItems.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Pick From List</p>
+                    <div className="space-y-1">
+                      {pickItems.map((p, i) => (
+                        <div key={i} className="text-xs rounded px-2 py-1 bg-zinc-800/50">
+                          <p className="text-zinc-300 mb-0.5">{p.question}</p>
+                          <p className="text-emerald-300">{p.answers.join(", ")}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Writing prompt */}
+                {writingPrompt && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Writing Prompt</p>
+                    <div className="rounded border border-zinc-700 p-2 space-y-1.5 text-xs">
+                      <p className="text-zinc-300 leading-relaxed">{writingPrompt.prompt}</p>
+                      <div className="flex gap-3 text-zinc-500">
+                        <span>{writingPrompt.word_limit}+ words</span>
+                        <span>{writingPrompt.time_limit_mins} min</span>
+                        {writingPrompt.chart_type && <span className="capitalize">{writingPrompt.chart_type}</span>}
+                        {writingPrompt.letter_type && <span className="capitalize">{writingPrompt.letter_type} letter</span>}
+                      </div>
+                      {writingPrompt.letter_situation && <p className="text-zinc-400">{writingPrompt.letter_situation}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cue card */}
+                {cueCard && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Cue Card</p>
+                    <div className="rounded border border-zinc-700 p-2 space-y-1.5 text-xs">
+                      <p className="text-zinc-300 font-medium">{cueCard.topic}</p>
+                      <ul className="space-y-0.5 pl-3">
+                        {cueCard.bullet_points.map((b, i) => <li key={i} className="text-zinc-400 list-disc">{b}</li>)}
+                      </ul>
+                      {cueCard.follow_up && <p className="text-zinc-400 italic">{cueCard.follow_up}</p>}
+                      <div className="flex gap-3 text-zinc-500">
+                        <span>Prep: {cueCard.prep_time_seconds}s</span>
+                        <span>Speak: {cueCard.speak_time_seconds}s</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Speaking questions */}
+                {speakingQuestions && speakingQuestions.length > 0 && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-zinc-500">Speaking Questions</p>
+                    <ol className="space-y-1 list-decimal list-inside">
+                      {speakingQuestions.map((item, idx) => (
+                        <li key={idx} className="text-zinc-300 text-xs">{item.question}</li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {/* Tags */}
+                {viewQ.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {viewQ.tags.map((t) => (
+                      <span key={t} className="rounded border border-zinc-700 px-1.5 py-0.5 text-xs text-zinc-500">{t}</span>
                     ))}
                   </div>
-                </div>
-              )}
-              {viewQ.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {viewQ.tags.map((t) => (
-                    <span key={t} className="rounded border border-zinc-700 px-1.5 py-0.5 text-xs text-zinc-500">{t}</span>
-                  ))}
-                </div>
-              )}
-              <p className="text-xs text-zinc-600">ID: {viewQ.id}</p>
-            </div>
-          )}
+                )}
+                <p className="text-xs text-zinc-600">ID: {viewQ.id}</p>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 

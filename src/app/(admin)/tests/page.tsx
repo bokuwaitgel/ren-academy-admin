@@ -147,16 +147,23 @@ export default function TestsPage() {
     } finally { setSaving(false); }
   };
 
-  const openEdit = (t: Test) => {
+  const openEdit = async (t: Test) => {
     setEditErr("");
+    setEditModules(EMPTY_MODULES);
     setEditForm({
       title: t.title,
       description: t.description ?? "",
       module_type: t.module_type,
       tags: t.tags.join(", "),
     });
-    setEditModules(modulesFromTest(t));
     setEditTest(t);
+    try {
+      const full = await tApi.get(t.id);
+      setEditModules(modulesFromTest(full));
+      setEditTest(full);
+    } catch {
+      setEditErr("Failed to load test data");
+    }
   };
 
   const handleUpdate = async () => {
