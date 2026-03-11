@@ -176,7 +176,7 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
   const [questionMeta, setQuestionMeta] = useState<Record<string, QuestionMeta>>({});
   const [picker, setPicker] = useState<PickerTarget | null>(null);
   const [activeSection, setActiveSection] = useState<ModuleKey | null>(null);
-  const tempId = useRef(typeof crypto !== "undefined" ? crypto.randomUUID() : "temp-id");
+  const tempId = useRef(typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : Math.random().toString(36).slice(2));
   const effectiveTestId = testId ?? tempId.current;
   const effectiveModuleType = moduleType ?? "academic";
 
