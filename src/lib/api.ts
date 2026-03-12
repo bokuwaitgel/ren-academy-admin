@@ -69,7 +69,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  role: "candidate" | "examiner" | "admin";
+  role: "candidate" | "examiner" | "admin" | "super_admin" | "super-admin";
   is_active: boolean;
   created_at: string;
 }
@@ -293,6 +293,62 @@ export interface Session {
   updated_at?: string;
 }
 
+export interface SpeakingEvaluation {
+  overall_score: number;
+  fluency_coherence: number;
+  lexical_resource: number;
+  grammar_accuracy: number;
+  pronunciation: number;
+  speaking_level: string;
+  fluency_feedback: string;
+  lexical_feedback: string;
+  grammar_feedback: string;
+  pronunciation_feedback: string;
+  grammar_errors: number;
+  vocabulary_errors: number;
+  sample_improvements: string[];
+  strengths: string;
+  areas_for_improvement: string;
+  overall_feedback: string;
+  motivation: string;
+  evaluated_from: string;
+}
+
+export interface AnswerDetail {
+  question_id: string;
+  title: string;
+  type: string;
+  user_answer: unknown;
+  correct_answer: unknown;
+  earned: number;
+  max: number;
+}
+
+export interface ListeningReadingDetails {
+  answer_details: AnswerDetail[];
+}
+
+export interface SpeakingAnswerDetail {
+  question_id?: string;
+  part_number?: number;
+  index: number;
+  question: string;
+  audio_url?: string;
+  evaluation: SpeakingEvaluation;
+}
+
+export interface SpeakingSectionDetails {
+  band_score: number;
+  criteria: {
+    fluency_coherence: number | null;
+    lexical_resource: number | null;
+    grammar_accuracy: number | null;
+    pronunciation: number | null;
+  };
+  answer_count: number;
+  answer_details: SpeakingAnswerDetail[];
+}
+
 export interface SessionResult {
   session_id: string;
   test_id: string;
@@ -304,11 +360,37 @@ export interface SessionResult {
     raw_score: number;
     max_score: number;
     band_score: number;
+    details?: SpeakingSectionDetails | ListeningReadingDetails | Record<string, unknown>;
   }[];
   overall_band?: number;
   started_at: string;
   finished_at?: string;
   time_spent_seconds?: number;
+}
+
+export interface SpeakingPracticeSession {
+  id: string;
+  user_id: string;
+  question_id: string;
+  part: string;
+  total: number;
+  answers: {
+    index: number;
+    question: string;
+    audio_url?: string;
+    evaluation?: SpeakingEvaluation;
+    submitted_at: string;
+  }[];
+  status: "in_progress" | "completed";
+  overall_score?: number;
+  criteria_scores?: {
+    fluency_coherence: number | null;
+    lexical_resource: number | null;
+    grammar_accuracy: number | null;
+    pronunciation: number | null;
+  };
+  created_at: string;
+  updated_at?: string;
 }
 
 // ── Admin ────────────────────────────────────
@@ -381,10 +463,25 @@ export const admin = {
         method: "POST",
         body: JSON.stringify({ session_id, section, band_score, details }),
       }),
+    delete: (session_id: string) =>
+      request<{ status: string; session_id: string }>("/api/admin/sessions/delete", {
+        method: "DELETE",
+        body: JSON.stringify({ session_id }),
+      }),
   },
   analytics: {
     questions: () => request<QuestionAnalytics>("/api/admin/analytics/questions"),
     tests: () => request<TestAnalytics>("/api/admin/analytics/tests"),
+  },
+  speakingPractice: {
+    list: (params: Record<string, string | number> = {}) =>
+      request<Paginated<SpeakingPracticeSession>>(
+        `/api/admin/speaking-practice/list?${new URLSearchParams(
+          Object.entries(params).map(([k, v]) => [k, String(v)])
+        )}`
+      ),
+    get: (sessionId: string) =>
+      request<SpeakingPracticeSession>(`/api/admin/speaking-practice/get?session_id=${sessionId}`),
   },
 };
 

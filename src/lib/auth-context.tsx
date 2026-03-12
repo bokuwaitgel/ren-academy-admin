@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUser = useCallback(async () => {
     try {
       const u = await auth.me();
-      if (u.role !== "admin" && u.role !== "examiner") {
+      if (!["admin", "examiner", "super_admin", "super-admin"].includes(u.role)) {
         clearTokens();
         setUser(null);
       } else {
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const res = await auth.login(email, password);
     setTokens(res.access_token, res.refresh_token);
     const u = await auth.me();
-    if (u.role !== "admin" && u.role !== "examiner") {
+    if (!["admin", "examiner", "super_admin", "super-admin"].includes(u.role)) {
       clearTokens();
       throw { detail: "Access denied. Admin or examiner role required.", status: 403 };
     }
