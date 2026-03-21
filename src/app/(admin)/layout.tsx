@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context";
 import { Sidebar } from "@/components/sidebar";
 import { Loader2 } from "lucide-react";
 
@@ -35,9 +35,5 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <AdminGuard>{children}</AdminGuard>
-    </AuthProvider>
-  );
+  return <AdminGuard>{children}</AdminGuard>;
 }

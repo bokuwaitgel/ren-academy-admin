@@ -358,7 +358,7 @@ export default function SessionsPage() {
   const [deleting, setDeleting] = useState(false);
 
 
-  const isSuperAdmin = currentUser?.role === "super_admin" || currentUser?.role === "super-admin";
+  const isSuperAdmin = currentUser?.role === "super_admin";
 
   const load = useCallback(async () => {
     setLoading(true);
