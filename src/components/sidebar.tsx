@@ -10,9 +10,12 @@ import {
   GraduationCap,
   LogOut,
   BookOpen,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "next-themes";
 
 const NAV_ITEMS = [
   { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
@@ -25,15 +28,16 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   return (
-    <aside className="flex h-screen w-60 flex-col border-r border-zinc-800 bg-[#111111]">
+    <aside className="flex h-screen w-60 flex-col border-r border-[var(--border-color)] bg-[var(--sidebar-bg)]">
       {/* Brand */}
-      <div className="flex items-center gap-2.5 border-b border-zinc-800 px-5 py-4">
+      <div className="flex items-center gap-2.5 border-b border-[var(--border-color)] px-5 py-4">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600">
           <BookOpen className="h-4 w-4 text-white" />
         </div>
-        <span className="text-base font-bold tracking-tight text-zinc-100">
+        <span className="text-base font-bold tracking-tight text-[var(--text-primary)]">
           Ren Academy
         </span>
       </div>
@@ -50,7 +54,7 @@ export function Sidebar() {
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 active
                   ? "bg-indigo-600/15 text-indigo-400 border-l-2 border-indigo-500 pl-[10px]"
-                  : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+                  : "text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -61,19 +65,26 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-zinc-800 px-3 py-4 space-y-3">
+      <div className="border-t border-[var(--border-color)] px-3 py-4 space-y-3">
         {user && (
           <div className="px-3">
-            <p className="truncate text-sm font-medium text-zinc-200">{user.username}</p>
-            <p className="truncate text-xs text-zinc-500">{user.email}</p>
-            <span className="mt-1 inline-block rounded-md border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-xs capitalize text-zinc-400">
+            <p className="truncate text-sm font-medium text-[var(--text-primary)]">{user.username}</p>
+            <p className="truncate text-xs text-[var(--text-muted)]">{user.email}</p>
+            <span className="mt-1 inline-block rounded-md border border-[var(--border-color)] bg-[var(--surface)] px-1.5 py-0.5 text-xs capitalize text-[var(--text-secondary)]">
               {user.role}
             </span>
           </div>
         )}
         <button
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {theme === "dark" ? "Light mode" : "Dark mode"}
+        </button>
+        <button
           onClick={logout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 transition-colors hover:bg-red-950/40 hover:text-red-400"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:bg-red-950/40 hover:text-red-400"
         >
           <LogOut className="h-4 w-4" />
           Sign out

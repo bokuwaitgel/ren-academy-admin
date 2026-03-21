@@ -27,13 +27,13 @@ function SectionPill({ sec }: { sec: SessionSectionState }) {
     return <span className={`${base} bg-emerald-950/60 text-emerald-400 border border-emerald-900`}><CheckCircle2 className="h-3 w-3" />{SECTION_ABBR[sec.section] ?? sec.section}</span>;
   if (sec.status === "in_progress")
     return <span className={`${base} bg-amber-950/60 text-amber-400 border border-amber-900`}><Clock className="h-3 w-3" />{SECTION_ABBR[sec.section] ?? sec.section}</span>;
-  return <span className={`${base} bg-zinc-900 text-zinc-600 border border-zinc-800`}><Circle className="h-3 w-3" />{SECTION_ABBR[sec.section] ?? sec.section}</span>;
+  return <span className={`${base} bg-[var(--card-bg)] text-[var(--text-muted)] border border-[var(--border-color)]`}><Circle className="h-3 w-3" />{SECTION_ABBR[sec.section] ?? sec.section}</span>;
 }
 
 function SectionProgress({ session }: { session: Session }) {
   if (session.mode === "practice") {
     const sec = session.session_sections[0];
-    if (!sec) return <span className="text-xs text-zinc-600">{session.practice_section ?? "—"}</span>;
+    if (!sec) return <span className="text-xs text-[var(--text-muted)]">{session.practice_section ?? "—"}</span>;
     return (
       <div className="flex items-center gap-1.5">
         <Badge variant="indigo" className="text-xs">PRACTICE</Badge>
@@ -86,11 +86,11 @@ const CRITERIA_LABELS: Record<string, string> = {
 };
 
 function BandBar({ score }: { score: number | null }) {
-  if (score == null) return <span className="text-zinc-600 text-xs">—</span>;
+  if (score == null) return <span className="text-[var(--text-muted)] text-xs">—</span>;
   const pct = (score / 9) * 100;
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1.5 flex-1 rounded-full bg-zinc-800">
+      <div className="h-1.5 flex-1 rounded-full bg-[var(--surface)]">
         <div
           className="h-full rounded-full bg-indigo-500"
           style={{ width: `${pct}%` }}
@@ -107,11 +107,11 @@ function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
   return (
     <div className="mt-3 space-y-3">
       {/* Criteria scores */}
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 space-y-2">
-        <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Criteria Breakdown</p>
+      <div className="rounded-lg border border-[var(--border-color)] bg-[var(--surface)] p-3 space-y-2">
+        <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">Criteria Breakdown</p>
         {Object.entries(CRITERIA_LABELS).map(([key, label]) => (
           <div key={key} className="grid grid-cols-[140px_1fr] items-center gap-2">
-            <span className="text-xs text-zinc-400">{label}</span>
+            <span className="text-xs text-[var(--text-secondary)]">{label}</span>
             <BandBar score={details.criteria[key as keyof typeof details.criteria] ?? null} />
           </div>
         ))}
@@ -120,66 +120,66 @@ function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
       {/* Per-answer cards */}
       {details.answer_details.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+          <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
             Answer Details ({details.answer_details.length})
           </p>
           {details.answer_details.map((ans, i) => {
             const ev = ans.evaluation;
             const isOpen = expanded === i;
             return (
-              <div key={i} className="rounded-lg border border-zinc-800 bg-zinc-900/40">
+              <div key={i} className="rounded-lg border border-[var(--border-color)] bg-[var(--surface)]">
                 <button
                   className="w-full flex items-center justify-between px-3 py-2 text-left"
                   onClick={() => setExpanded(isOpen ? null : i)}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs text-zinc-500 shrink-0">
+                    <span className="text-xs text-[var(--text-muted)] shrink-0">
                       {ans.part_number ? `Part ${ans.part_number}` : ""} Q{ans.index + 1}
                     </span>
-                    <span className="text-xs text-zinc-300 truncate">{ans.question || "—"}</span>
+                    <span className="text-xs text-[var(--text-secondary)] truncate">{ans.question || "—"}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {ev && <span className="text-sm font-bold text-indigo-400">{ev.overall_score}</span>}
-                    {isOpen ? <ChevronUp className="h-3 w-3 text-zinc-500" /> : <ChevronDown className="h-3 w-3 text-zinc-500" />}
+                    {isOpen ? <ChevronUp className="h-3 w-3 text-[var(--text-muted)]" /> : <ChevronDown className="h-3 w-3 text-[var(--text-muted)]" />}
                   </div>
                 </button>
 
                 {isOpen && ev && (
-                  <div className="border-t border-zinc-800 px-3 pb-3 pt-2 space-y-2 text-xs">
+                  <div className="border-t border-[var(--border-color)] px-3 pb-3 pt-2 space-y-2 text-xs">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="secondary">{ev.speaking_level}</Badge>
-                      <span className="text-zinc-500">{ev.grammar_errors} grammar err · {ev.vocabulary_errors} vocab err</span>
-                      <span className="text-zinc-600 ml-auto">via {ev.evaluated_from}</span>
+                      <span className="text-[var(--text-muted)]">{ev.grammar_errors} grammar err · {ev.vocabulary_errors} vocab err</span>
+                      <span className="text-[var(--text-muted)] ml-auto">via {ev.evaluated_from}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                       {Object.entries(CRITERIA_LABELS).map(([key, label]) => (
                         <div key={key}>
-                          <span className="text-zinc-500">{label}: </span>
-                          <span className="font-bold text-zinc-200">{ev[key as keyof typeof ev]}</span>
+                          <span className="text-[var(--text-muted)]">{label}: </span>
+                          <span className="font-bold text-[var(--text-primary)]">{ev[key as keyof typeof ev]}</span>
                         </div>
                       ))}
                     </div>
                     {ev.overall_feedback && (
-                      <p className="text-zinc-400 leading-relaxed">{ev.overall_feedback}</p>
+                      <p className="text-[var(--text-secondary)] leading-relaxed">{ev.overall_feedback}</p>
                     )}
                     {ev.strengths && (
                       <div>
                         <span className="text-emerald-500 font-medium">Strengths: </span>
-                        <span className="text-zinc-400">{ev.strengths}</span>
+                        <span className="text-[var(--text-secondary)]">{ev.strengths}</span>
                       </div>
                     )}
                     {ev.areas_for_improvement && (
                       <div>
                         <span className="text-amber-500 font-medium">Improve: </span>
-                        <span className="text-zinc-400">{ev.areas_for_improvement}</span>
+                        <span className="text-[var(--text-secondary)]">{ev.areas_for_improvement}</span>
                       </div>
                     )}
                     {ev.sample_improvements?.length > 0 && (
                       <div>
-                        <p className="text-zinc-500 mb-1">Sample improvements:</p>
+                        <p className="text-[var(--text-muted)] mb-1">Sample improvements:</p>
                         <ul className="space-y-0.5">
                           {ev.sample_improvements.map((s, j) => (
-                            <li key={j} className="text-zinc-300 pl-2 border-l border-indigo-800">"{s}"</li>
+                            <li key={j} className="text-[var(--text-secondary)] pl-2 border-l border-indigo-800">"{s}"</li>
                           ))}
                         </ul>
                       </div>
@@ -208,14 +208,14 @@ function formatAnswer(val: unknown): string {
 
 function AnswerDetailList({ details }: { details: ListeningReadingDetails }) {
   const items: AnswerDetail[] = details.answer_details ?? [];
-  if (!items.length) return <p className="text-xs text-zinc-600 pt-2">No answer data.</p>;
+  if (!items.length) return <p className="text-xs text-[var(--text-muted)] pt-2">No answer data.</p>;
 
   const correct = items.filter(a => a.earned > 0 && a.max > 0).length;
   const total = items.filter(a => a.max > 0).length;
 
   return (
     <div className="mt-2 space-y-1.5">
-      <div className="flex items-center gap-3 text-xs text-zinc-500 pb-1">
+      <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] pb-1">
         <span>
           <span className="font-bold text-emerald-400">{correct}</span>/{total} correct
         </span>
@@ -231,13 +231,13 @@ function AnswerDetailList({ details }: { details: ListeningReadingDetails }) {
               isCorrect ? "border-emerald-900 bg-emerald-950/20" :
               isPartial ? "border-amber-900 bg-amber-950/20" :
               isWrong ? "border-red-900/50 bg-red-950/10" :
-              "border-zinc-800 bg-zinc-800/20"
+              "border-[var(--border-color)] bg-[var(--surface)]"
             }`}
           >
             <div className="flex items-start justify-between gap-2">
-              <span className="text-zinc-300 leading-snug flex-1">{a.title || `Q${i + 1}`}</span>
+              <span className="text-[var(--text-secondary)] leading-snug flex-1">{a.title || `Q${i + 1}`}</span>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`font-bold ${isCorrect ? "text-emerald-400" : isPartial ? "text-amber-400" : isWrong ? "text-red-400" : "text-zinc-500"}`}>
+                <span className={`font-bold ${isCorrect ? "text-emerald-400" : isPartial ? "text-amber-400" : isWrong ? "text-red-400" : "text-[var(--text-muted)]"}`}>
                   {a.earned}/{a.max}
                 </span>
                 {isCorrect && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />}
@@ -246,13 +246,13 @@ function AnswerDetailList({ details }: { details: ListeningReadingDetails }) {
             </div>
             <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
               <div>
-                <span className="text-zinc-600">Your answer: </span>
+                <span className="text-[var(--text-muted)]">Your answer: </span>
                 <span className={isCorrect ? "text-emerald-300" : "text-red-300"}>{formatAnswer(a.user_answer)}</span>
               </div>
               {!isCorrect && (
                 <div>
-                  <span className="text-zinc-600">Correct: </span>
-                  <span className="text-zinc-300">{formatAnswer(a.correct_answer)}</span>
+                  <span className="text-[var(--text-muted)]">Correct: </span>
+                  <span className="text-[var(--text-secondary)]">{formatAnswer(a.correct_answer)}</span>
                 </div>
               )}
             </div>
@@ -273,7 +273,7 @@ function SectionDetailList({ session }: { session: Session }) {
 
   return (
     <div>
-      <p className="mb-2 text-xs font-medium text-zinc-500">Section Progress</p>
+      <p className="mb-2 text-xs font-medium text-[var(--text-muted)]">Section Progress</p>
       <div className="space-y-2">
         {session.session_sections.map((sec) => {
           const score = scoreMap[sec.section];
@@ -289,36 +289,36 @@ function SectionDetailList({ session }: { session: Session }) {
           const hasDetails = !!speakingDetails || !!lrDetails || (score && score.raw_score != null);
 
           return (
-            <div key={sec.section} className="rounded-lg border border-zinc-800 bg-zinc-800/30 overflow-hidden">
+            <div key={sec.section} className="rounded-lg border border-[var(--border-color)] bg-[var(--surface)] overflow-hidden">
               <button
                 className="w-full flex items-center gap-3 px-3 py-2.5 text-left"
                 onClick={() => hasDetails && setOpenSection(isOpen ? null : sec.section)}
               >
                 <SectionPill sec={sec} />
-                <span className="flex-1 text-sm capitalize text-zinc-300">{sec.section}</span>
+                <span className="flex-1 text-sm capitalize text-[var(--text-secondary)]">{sec.section}</span>
                 {score?.band_score != null && (
                   <span className="text-sm font-bold text-indigo-400">Band {score.band_score}</span>
                 )}
                 {sec.time_spent_seconds != null && (
-                  <span className="text-xs text-zinc-500 ml-1">{fmtSecs(sec.time_spent_seconds)}</span>
+                  <span className="text-xs text-[var(--text-muted)] ml-1">{fmtSecs(sec.time_spent_seconds)}</span>
                 )}
                 {hasDetails && (
                   isOpen
-                    ? <ChevronUp className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
-                    : <ChevronDown className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
+                    ? <ChevronUp className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />
+                    : <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />
                 )}
               </button>
 
               {isOpen && (
-                <div className="border-t border-zinc-800 px-3 pb-3">
+                <div className="border-t border-[var(--border-color)] px-3 pb-3">
                   {speakingDetails ? (
                     <SpeakingDetails details={speakingDetails} />
                   ) : lrDetails ? (
                     <AnswerDetailList details={lrDetails} />
                   ) : score ? (
-                    <div className="pt-2 text-xs text-zinc-400">
+                    <div className="pt-2 text-xs text-[var(--text-secondary)]">
                       <div className="flex gap-4">
-                        <span>Score: <span className="font-bold text-zinc-200">{score.raw_score}/{score.max_score}</span></span>
+                        <span>Score: <span className="font-bold text-[var(--text-primary)]">{score.raw_score}/{score.max_score}</span></span>
                         {score.band_score != null && (
                           <span>Band: <span className="font-bold text-indigo-300">{score.band_score}</span></span>
                         )}
@@ -426,8 +426,8 @@ export default function SessionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-zinc-100">Sessions</h1>
-          <p className="text-sm text-zinc-500">{data?.total ?? 0} total sessions</p>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">Sessions</h1>
+          <p className="text-sm text-[var(--text-muted)]">{data?.total ?? 0} total sessions</p>
         </div>
       </div>
 
@@ -461,7 +461,7 @@ export default function SessionsPage() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-600" />
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
             </div>
           ) : (
             <Table>
@@ -479,10 +479,10 @@ export default function SessionsPage() {
               <TableBody>
                 {data?.items.map((s) => (
                   <TableRow key={s.id}>
-                    <TableCell className="text-xs font-mono text-zinc-400 max-w-[100px] truncate">
+                    <TableCell className="text-xs font-mono text-[var(--text-secondary)] max-w-[100px] truncate">
                       {s.user_id.slice(-8)}
                     </TableCell>
-                    <TableCell className="text-xs font-mono text-zinc-400 max-w-[100px] truncate">
+                    <TableCell className="text-xs font-mono text-[var(--text-secondary)] max-w-[100px] truncate">
                       {s.test_id.slice(-8)}
                     </TableCell>
                     <TableCell>
@@ -492,9 +492,9 @@ export default function SessionsPage() {
                     <TableCell>
                       {s.overall_band != null
                         ? <span className="font-bold text-indigo-400">{s.overall_band}</span>
-                        : <span className="text-zinc-600">—</span>}
+                        : <span className="text-[var(--text-muted)]">—</span>}
                     </TableCell>
-                    <TableCell className="text-xs text-zinc-500">
+                    <TableCell className="text-xs text-[var(--text-muted)]">
                       {new Date(s.started_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
@@ -535,7 +535,7 @@ export default function SessionsPage() {
                 ))}
                 {!data?.items.length && (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-zinc-600">
+                    <TableCell colSpan={7} className="h-32 text-center text-[var(--text-muted)]">
                       No sessions found
                     </TableCell>
                   </TableRow>
@@ -548,7 +548,7 @@ export default function SessionsPage() {
 
       {/* Pagination */}
       {data && data.total_pages > 1 && (
-        <div className="flex items-center justify-between text-sm text-zinc-500">
+        <div className="flex items-center justify-between text-sm text-[var(--text-muted)]">
           <span>Page {data.page} of {data.total_pages}</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
@@ -571,40 +571,40 @@ export default function SessionsPage() {
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-zinc-500">Session ID</p>
-                  <p className="font-mono text-xs text-zinc-400">{viewSession.id}</p>
+                  <p className="text-xs text-[var(--text-muted)]">Session ID</p>
+                  <p className="font-mono text-xs text-[var(--text-secondary)]">{viewSession.id}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-500">User ID</p>
-                  <p className="font-mono text-xs text-zinc-400">{viewSession.user_id}</p>
+                  <p className="text-xs text-[var(--text-muted)]">User ID</p>
+                  <p className="font-mono text-xs text-[var(--text-secondary)]">{viewSession.user_id}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-500">Mode</p>
+                  <p className="text-xs text-[var(--text-muted)]">Mode</p>
                   <Badge variant={viewSession.mode === "practice" ? "indigo" : "secondary"} className="mt-1 capitalize">
                     {viewSession.mode === "full_test" ? "Full Test" : "Practice"}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-500">Status</p>
+                  <p className="text-xs text-[var(--text-muted)]">Status</p>
                   <div className="mt-1"><StatusBadge status={viewSession.status} /></div>
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-500">Started</p>
-                  <p className="text-zinc-300">{new Date(viewSession.started_at).toLocaleString()}</p>
+                  <p className="text-xs text-[var(--text-muted)]">Started</p>
+                  <p className="text-[var(--text-secondary)]">{new Date(viewSession.started_at).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-500">Duration</p>
-                  <p className="text-zinc-300">{fmtSecs(viewSession.time_spent_seconds)}</p>
+                  <p className="text-xs text-[var(--text-muted)]">Duration</p>
+                  <p className="text-[var(--text-secondary)]">{fmtSecs(viewSession.time_spent_seconds)}</p>
                 </div>
                 {viewSession.overall_band != null && (
                   <div>
-                    <p className="text-xs text-zinc-500">Overall Band</p>
+                    <p className="text-xs text-[var(--text-muted)]">Overall Band</p>
                     <p className="text-2xl font-bold text-indigo-400">{viewSession.overall_band}</p>
                   </div>
                 )}
                 {viewSession.current_section && (
                   <div>
-                    <p className="text-xs text-zinc-500">Current Section</p>
+                    <p className="text-xs text-[var(--text-muted)]">Current Section</p>
                     <Badge variant="warning" className="mt-1 capitalize">{viewSession.current_section}</Badge>
                   </div>
                 )}
@@ -627,7 +627,7 @@ export default function SessionsPage() {
           </DialogHeader>
           {resultLoading ? (
             <div className="flex h-24 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-600" />
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
             </div>
           ) : result ? (
             <div className="space-y-4 text-sm">
@@ -642,23 +642,23 @@ export default function SessionsPage() {
               </div>
               {result.section_scores.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-zinc-500">Section Scores</p>
+                  <p className="text-xs font-medium text-[var(--text-muted)]">Section Scores</p>
                   {result.section_scores.map((sc) => {
                     const isSpeaking = sc.section === "speaking";
                     const speakingDetails = isSpeaking && sc.details && "criteria" in sc.details
                       ? sc.details as SpeakingSectionDetails
                       : null;
                     return (
-                      <div key={sc.section} className="rounded border border-zinc-800 bg-zinc-800/30">
+                      <div key={sc.section} className="rounded border border-[var(--border-color)] bg-[var(--surface)]">
                         <div className="flex items-center justify-between px-3 py-2">
-                          <span className="capitalize font-medium text-zinc-300">{sc.section}</span>
-                          <div className="flex items-center gap-3 text-xs text-zinc-500">
+                          <span className="capitalize font-medium text-[var(--text-secondary)]">{sc.section}</span>
+                          <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
                             <span>{sc.raw_score}/{sc.max_score} answers</span>
-                            <span className="font-bold text-zinc-200">Band {sc.band_score}</span>
+                            <span className="font-bold text-[var(--text-primary)]">Band {sc.band_score}</span>
                           </div>
                         </div>
                         {speakingDetails && (
-                          <div className="border-t border-zinc-800 px-3 pb-3">
+                          <div className="border-t border-[var(--border-color)] px-3 pb-3">
                             <SpeakingDetails details={speakingDetails} />
                           </div>
                         )}
@@ -667,7 +667,7 @@ export default function SessionsPage() {
                   })}
                 </div>
               )}
-              <div className="flex items-center justify-between text-xs text-zinc-500">
+              <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
                 <span>Duration: {fmtSecs(result.time_spent_seconds)}</span>
                 {result.finished_at && (
                   <span>Finished: {new Date(result.finished_at).toLocaleDateString()}</span>
@@ -675,7 +675,7 @@ export default function SessionsPage() {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-zinc-500">Results not yet available.</p>
+            <p className="text-sm text-[var(--text-muted)]">Results not yet available.</p>
           )}
         </DialogContent>
       </Dialog>
@@ -687,9 +687,9 @@ export default function SessionsPage() {
             <DialogTitle>Delete Session</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-[var(--text-secondary)]">
               Are you sure you want to permanently delete session{" "}
-              <span className="font-mono text-zinc-200">{deleteTarget?.id.slice(-8)}</span>?
+              <span className="font-mono text-[var(--text-primary)]">{deleteTarget?.id.slice(-8)}</span>?
               This action cannot be undone.
             </p>
             <div className="flex gap-2 pt-1">
@@ -719,7 +719,7 @@ export default function SessionsPage() {
               <div className="rounded border border-red-900 bg-red-950/50 p-3 text-sm text-red-400">{gradeErr}</div>
             )}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Section</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Section</label>
               <Select value={gradeSection} onValueChange={setGradeSection}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -729,7 +729,7 @@ export default function SessionsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Band Score</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Band Score</label>
               <Select value={gradeBand} onValueChange={setGradeBand}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -740,7 +740,7 @@ export default function SessionsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Details (JSON, optional)</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Details (JSON, optional)</label>
               <Input
                 value={gradeDetails}
                 onChange={e => setGradeDetails(e.target.value)}

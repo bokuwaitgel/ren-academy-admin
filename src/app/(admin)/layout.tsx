@@ -16,8 +16,8 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-950">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-600" />
+      <div className="flex h-screen items-center justify-center bg-[var(--background)]">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-muted)]" />
       </div>
     );
   }
@@ -25,9 +25,9 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-zinc-950">
+    <div className="flex h-screen overflow-hidden bg-[var(--background)]">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-[#0f0f0f] p-6">
+      <main className="flex-1 overflow-y-auto bg-[var(--background)] p-6">
         {children}
       </main>
     </div>

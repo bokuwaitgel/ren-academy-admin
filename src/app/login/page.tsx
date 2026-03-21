@@ -41,30 +41,30 @@ function LoginForm() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-950">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-600" />
+      <div className="flex h-screen items-center justify-center bg-[var(--background)]">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-muted)]" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4">
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-900/40">
             <BookOpen className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">
             Ren Academy
           </h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Sign in to the admin panel
           </p>
         </div>
 
         {/* Card */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl">
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] p-6 shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="rounded-lg border border-red-900 bg-red-950/50 p-3 text-sm text-red-400">
@@ -72,7 +72,7 @@ function LoginForm() {
               </div>
             )}
             <div className="space-y-1.5">
-              <label htmlFor="email" className="text-sm font-medium text-zinc-300">
+              <label htmlFor="email" className="text-sm font-medium text-[var(--text-secondary)]">
                 Email
               </label>
               <Input
@@ -86,7 +86,7 @@ function LoginForm() {
               />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="password" className="text-sm font-medium text-zinc-300">
+              <label htmlFor="password" className="text-sm font-medium text-[var(--text-secondary)]">
                 Password
               </label>
               <Input
@@ -112,7 +112,7 @@ function LoginForm() {
           </form>
         </div>
 
-        <p className="mt-4 text-center text-xs text-zinc-600">
+        <p className="mt-4 text-center text-xs text-[var(--text-muted)]">
           Admin &amp; Examiner access only
         </p>
       </div>

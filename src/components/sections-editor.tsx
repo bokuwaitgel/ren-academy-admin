@@ -86,11 +86,11 @@ const MODULE_META: {
   },
   {
     key: "speaking", label: "Speaking",
-    cardColor: "border-zinc-700 bg-zinc-800/40",
-    innerColor: "border-zinc-700/60",
-    accent: "text-zinc-300",
-    btnHover: "hover:bg-zinc-700",
-    inputRing: "focus:ring-zinc-600",
+    cardColor: "border-[var(--border-color)] bg-[var(--surface)]",
+    innerColor: "border-[var(--border-color)]",
+    accent: "text-[var(--text-secondary)]",
+    btnHover: "hover:bg-[var(--surface-secondary)]",
+    inputRing: "focus:ring-[var(--border-color)]",
     Icon: Mic2,
   },
 ];
@@ -150,9 +150,9 @@ function FileUploadInput({ value, accept, placeholder, uploadFn, onChange }: Fil
     <div className="mt-1 space-y-1">
       <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleFile} />
       {value ? (
-        <div className="flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-300">
+        <div className="flex items-center gap-1.5 rounded-md border border-[var(--border-color)] bg-[var(--card-bg)] px-2.5 py-1.5 text-xs text-[var(--text-secondary)]">
           <span className="flex-1 truncate">{displayName}</span>
-          <button type="button" onClick={() => onChange("")} className="shrink-0 text-zinc-500 hover:text-red-400 transition-colors">
+          <button type="button" onClick={() => onChange("")} className="shrink-0 text-[var(--text-muted)] hover:text-red-400 transition-colors">
             <X className="h-3 w-3" />
           </button>
         </div>
@@ -161,7 +161,7 @@ function FileUploadInput({ value, accept, placeholder, uploadFn, onChange }: Fil
           type="button"
           disabled={uploading}
           onClick={() => inputRef.current?.click()}
-          className="flex items-center gap-1.5 rounded-md border border-dashed border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-md border border-dashed border-[var(--border-color)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:border-[var(--border-color)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
         >
           {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
           {uploading ? "Uploading…" : placeholder}
@@ -337,16 +337,16 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
       {ids.map((id) => {
         const meta = questionMeta[id];
         return (
-          <span key={id} className="flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-xs text-zinc-300">
+          <span key={id} className="flex items-center gap-1 rounded-md border border-[var(--border-color)] bg-[var(--card-bg)] px-2 py-0.5 text-xs text-[var(--text-secondary)]">
             <span className="max-w-[180px] truncate">{meta?.title ?? id.slice(0, 8) + "…"}</span>
-            <button type="button" onClick={() => onRemove(id)} className="ml-0.5 text-zinc-500 hover:text-red-400 transition-colors">
+            <button type="button" onClick={() => onRemove(id)} className="ml-0.5 text-[var(--text-muted)] hover:text-red-400 transition-colors">
               <X className="h-3 w-3" />
             </button>
           </span>
         );
       })}
       {ids.length === 0 && (
-        <span className="text-[11px] text-zinc-600 italic">No questions added yet</span>
+        <span className="text-[11px] text-[var(--text-muted)] italic">No questions added yet</span>
       )}
     </div>
   );
@@ -383,14 +383,14 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
               className={`relative flex items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-medium transition-all ${
                 isEnabled
                   ? isSelected
-                    ? `${cardColor} ${accent} ring-1 ring-offset-1 ring-offset-zinc-950 ${
+                    ? `${cardColor} ${accent} ring-1 ring-offset-1 ring-offset-[var(--background)] ${
                         key === "listening" ? "ring-indigo-600" :
                         key === "reading"   ? "ring-emerald-600" :
                         key === "writing"   ? "ring-amber-600" :
-                        "ring-zinc-500"
+                        "ring-[var(--border-color)]"
                       }`
                     : `${cardColor} ${accent} opacity-70 hover:opacity-100`
-                  : "border-zinc-800 bg-zinc-900 text-zinc-600 hover:text-zinc-400 hover:border-zinc-700"
+                  : "border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--border-color)]"
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -399,7 +399,7 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
                 <span
                   title={`Disable ${label}`}
                   onClick={(e) => { e.stopPropagation(); toggleModule(key, false); }}
-                  className="absolute right-1.5 top-1 text-zinc-500 hover:text-red-400 transition-colors"
+                  className="absolute right-1.5 top-1 text-[var(--text-muted)] hover:text-red-400 transition-colors"
                 >
                   <X className="h-2.5 w-2.5" />
                 </span>
@@ -411,7 +411,7 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
 
       {/* ── Empty state ──────────────────────────────────────────── */}
       {!modules.listening && !modules.reading && !modules.writing && !modules.speaking && (
-        <p className="rounded-lg border border-dashed border-zinc-800 py-4 text-center text-xs text-zinc-600">
+        <p className="rounded-lg border border-dashed border-[var(--border-color)] py-4 text-center text-xs text-[var(--text-muted)]">
           Click a section above to enable it and start building your test.
         </p>
       )}
@@ -458,18 +458,18 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
 
           {/* ── Listening parts ──────────────────────────────── */}
           {activeMeta.key === "listening" && modules.listening!.sections.map((sec, i) => (
-            <div key={i} className={`rounded-md border ${activeMeta.innerColor} bg-zinc-950/40 p-3 space-y-2.5`}>
+            <div key={i} className={`rounded-md border ${activeMeta.innerColor} bg-[var(--background)] p-3 space-y-2.5`}>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-indigo-200">Section {sec.section_number}</span>
                 {modules.listening!.sections.length > 1 && (
                   <button type="button" onClick={() => removeListeningSection(i)}
-                    className="text-zinc-600 hover:text-red-400 transition-colors">
+                    className="text-[var(--text-muted)] hover:text-red-400 transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
               <div>
-                <label className="text-[11px] text-zinc-500">Audio *</label>
+                <label className="text-[11px] text-[var(--text-muted)]">Audio *</label>
                 <FileUploadInput
                   value={sec.audio_url}
                   accept="audio/*"
@@ -482,7 +482,7 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
               </div>
               <div>
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] text-zinc-500">Questions ({sec.question_ids.length})</label>
+                  <label className="text-[11px] text-[var(--text-muted)]">Questions ({sec.question_ids.length})</label>
                   <Button type="button" size="sm" variant="ghost"
                     className="h-6 px-2 text-[11px] text-indigo-400 hover:bg-indigo-950/40"
                     onClick={() => setPicker({ module: "listening", index: i })}>
@@ -497,27 +497,27 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
 
           {/* ── Reading parts ──────────────────────────────────── */}
           {activeMeta.key === "reading" && modules.reading!.sections.map((sec, i) => (
-            <div key={i} className={`rounded-md border ${activeMeta.innerColor} bg-zinc-950/40 p-3 space-y-2.5`}>
+            <div key={i} className={`rounded-md border ${activeMeta.innerColor} bg-[var(--background)] p-3 space-y-2.5`}>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-emerald-200">Passage {sec.section_number}</span>
                 {modules.reading!.sections.length > 1 && (
                   <button type="button" onClick={() => removeReadingSection(i)}
-                    className="text-zinc-600 hover:text-red-400 transition-colors">
+                    className="text-[var(--text-muted)] hover:text-red-400 transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
               <div>
-                <label className="text-[11px] text-zinc-500">Passage text *</label>
+                <label className="text-[11px] text-[var(--text-muted)]">Passage text *</label>
                 <textarea rows={5}
-                  className={`mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-1 ${activeMeta.inputRing} resize-y`}
+                  className={`mt-1 w-full rounded-md border border-[var(--border-color)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 ${activeMeta.inputRing} resize-y`}
                   placeholder="Paste the reading passage here…"
                   value={sec.passage}
                   onChange={(e) => updateReadingSection(i, { passage: e.target.value })} />
               </div>
               <div>
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] text-zinc-500">Questions ({sec.question_ids.length})</label>
+                  <label className="text-[11px] text-[var(--text-muted)]">Questions ({sec.question_ids.length})</label>
                   <Button type="button" size="sm" variant="ghost"
                     className="h-6 px-2 text-[11px] text-emerald-400 hover:bg-emerald-950/40"
                     onClick={() => setPicker({ module: "reading", index: i })}>
@@ -532,27 +532,27 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
 
           {/* ── Writing tasks ──────────────────────────────────── */}
           {activeMeta.key === "writing" && modules.writing!.tasks.map((task, i) => (
-            <div key={i} className={`rounded-md border ${activeMeta.innerColor} bg-zinc-950/40 p-3 space-y-2.5`}>
+            <div key={i} className={`rounded-md border ${activeMeta.innerColor} bg-[var(--background)] p-3 space-y-2.5`}>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-amber-200">Task {task.task_number}</span>
                 {modules.writing!.tasks.length > 1 && (
                   <button type="button" onClick={() => removeWritingTask(i)}
-                    className="text-zinc-600 hover:text-red-400 transition-colors">
+                    className="text-[var(--text-muted)] hover:text-red-400 transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
               <div>
-                <label className="text-[11px] text-zinc-500">Description / prompt *</label>
+                <label className="text-[11px] text-[var(--text-muted)]">Description / prompt *</label>
                 <textarea rows={4}
-                  className={`mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-1 ${activeMeta.inputRing} resize-y`}
+                  className={`mt-1 w-full rounded-md border border-[var(--border-color)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-1 ${activeMeta.inputRing} resize-y`}
                   placeholder="Write the task prompt / instructions…"
                   value={task.description}
                   onChange={(e) => updateWritingTask(i, { description: e.target.value })} />
               </div>
               {task.task_number === 1 && (
                 <div>
-                  <label className="text-[11px] text-zinc-500">Image — chart / graph / map (optional)</label>
+                  <label className="text-[11px] text-[var(--text-muted)]">Image — chart / graph / map (optional)</label>
                   <FileUploadInput
                     value={task.image_url ?? ""}
                     accept="image/*"
@@ -569,21 +569,21 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
 
           {/* ── Speaking parts ─────────────────────────────────── */}
           {activeMeta.key === "speaking" && modules.speaking!.parts.map((part, i) => (
-            <div key={i} className={`rounded-md border ${activeMeta.innerColor} bg-zinc-950/40 p-3 space-y-2.5`}>
+            <div key={i} className={`rounded-md border ${activeMeta.innerColor} bg-[var(--background)] p-3 space-y-2.5`}>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-300">Part {part.part_number}</span>
+                <span className="text-xs font-semibold text-[var(--text-secondary)]">Part {part.part_number}</span>
                 {modules.speaking!.parts.length > 1 && (
                   <button type="button" onClick={() => removeSpeakingPart(i)}
-                    className="text-zinc-600 hover:text-red-400 transition-colors">
+                    className="text-[var(--text-muted)] hover:text-red-400 transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
               <div>
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] text-zinc-500">Questions ({part.question_ids.length})</label>
+                  <label className="text-[11px] text-[var(--text-muted)]">Questions ({part.question_ids.length})</label>
                   <Button type="button" size="sm" variant="ghost"
-                    className="h-6 px-2 text-[11px] text-zinc-300 hover:bg-zinc-700"
+                    className="h-6 px-2 text-[11px] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
                     onClick={() => setPicker({ module: "speaking", index: i })}>
                     <Plus className="h-3 w-3 mr-1" /> Add
                   </Button>

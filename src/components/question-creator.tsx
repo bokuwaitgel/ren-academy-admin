@@ -316,12 +316,12 @@ function QuestionFileUpload({
 
   return (
     <div className="space-y-1.5">
-      <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{label}</label>
+      <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">{label}</label>
       <input ref={ref} type="file" accept={accept} className="hidden" onChange={handleFile} />
       {value ? (
-        <div className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-2 text-xs text-zinc-700">
+        <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--elevated-bg)] px-2.5 py-2 text-xs text-[var(--text-secondary)]">
           <span className="flex-1 truncate">{displayName}</span>
-          <button type="button" onClick={() => onChange("")} className="shrink-0 text-zinc-400 hover:text-red-500">
+          <button type="button" onClick={() => onChange("")} className="shrink-0 text-[var(--text-secondary)] hover:text-red-500">
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -330,7 +330,7 @@ function QuestionFileUpload({
           type="button"
           disabled={uploading}
           onClick={() => ref.current?.click()}
-          className="flex w-full items-center gap-2 rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-500 hover:border-zinc-400 hover:text-zinc-700 transition-colors disabled:opacity-50"
+          className="flex w-full items-center gap-2 rounded-lg border border-dashed border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-xs text-[var(--text-muted)] hover:border-[var(--border-color)] hover:text-[var(--text-secondary)] transition-colors disabled:opacity-50"
         >
           {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
           {uploading ? "Uploading…" : placeholder}
@@ -538,21 +538,21 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
             onClick={() => { if (s.id < step) setStep(s.id); }}
             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
               s.id === step
-                ? "bg-zinc-900 text-white shadow-sm"
+                ? "bg-[var(--foreground)] text-white shadow-sm"
                 : s.id < step
-                ? "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 cursor-pointer"
-                : "bg-zinc-50 text-zinc-400"
+                ? "bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] cursor-pointer"
+                : "bg-[var(--elevated-bg)] text-[var(--text-secondary)]"
             }`}
           >
             <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
-              s.id < step ? "bg-green-500 text-white" : s.id === step ? "bg-white text-zinc-900" : "bg-zinc-200 text-zinc-400"
+              s.id < step ? "bg-green-500 text-white" : s.id === step ? "bg-[var(--card-bg)] text-[var(--foreground)]" : "bg-[var(--surface-secondary)] text-[var(--text-secondary)]"
             }`}>
               {s.id < step ? <Check className="h-3 w-3" /> : s.id}
             </span>
             <span className="hidden sm:inline">{s.title}</span>
           </button>
           {i < STEPS.length - 1 && (
-            <div className={`mx-1 h-px w-4 ${s.id < step ? "bg-green-400" : "bg-zinc-200"}`} />
+            <div className={`mx-1 h-px w-4 ${s.id < step ? "bg-green-400" : "bg-[var(--surface-secondary)]"}`} />
           )}
         </div>
       ))}
@@ -564,8 +564,8 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
   const renderStep1 = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-zinc-900 mb-1">Choose Section</h3>
-        <p className="text-sm text-zinc-500">Select which IELTS section this question belongs to</p>
+        <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Choose Section</h3>
+        <p className="text-sm text-[var(--text-muted)]">Select which IELTS section this question belongs to</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {SECTIONS.map((s) => {
@@ -584,21 +584,21 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
               }}
               className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
                 selected
-                  ? "border-zinc-900 bg-zinc-50 shadow-sm"
-                  : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                  ? "border-[var(--foreground)] bg-[var(--elevated-bg)] shadow-sm"
+                  : "border-[var(--border-color)] hover:border-[var(--border-color)] hover:bg-[var(--elevated-bg)]"
               }`}
             >
               <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${s.color} text-white`}>
                 <Icon className="h-5 w-5" />
               </div>
               <div>
-                <div className="font-semibold text-zinc-900">{s.label}</div>
-                <div className="text-xs text-zinc-500">
+                <div className="font-semibold text-[var(--foreground)]">{s.label}</div>
+                <div className="text-xs text-[var(--text-muted)]">
                   {(SECTION_PARTS[s.value] || []).length} parts
                 </div>
               </div>
               {selected && (
-                <Check className="ml-auto h-5 w-5 text-zinc-900" />
+                <Check className="ml-auto h-5 w-5 text-[var(--foreground)]" />
               )}
             </button>
           );
@@ -607,7 +607,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
 
       {form.section && (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold text-zinc-700">Section Part</h4>
+          <h4 className="text-sm font-semibold text-[var(--text-secondary)]">Section Part</h4>
           <div className="flex flex-wrap gap-2">
             {(SECTION_PARTS[form.section] || []).map((part) => (
               <button
@@ -615,8 +615,8 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 onClick={() => updateForm({ section_part: part.value })}
                 className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
                   form.section_part === part.value
-                    ? "border-zinc-900 bg-zinc-900 text-white"
-                    : "border-zinc-200 text-zinc-600 hover:border-zinc-400"
+                    ? "border-[var(--foreground)] bg-[var(--foreground)] text-white"
+                    : "border-[var(--border-color)] text-[var(--text-muted)] hover:border-[var(--border-color)]"
                 }`}
               >
                 {part.label}
@@ -626,7 +626,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
 
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-500">Module Type</label>
+              <label className="text-xs font-medium text-[var(--text-muted)]">Module Type</label>
               <Select value={form.module_type} onValueChange={(v) => updateForm({ module_type: v })}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -636,7 +636,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-500">Test Type</label>
+              <label className="text-xs font-medium text-[var(--text-muted)]">Test Type</label>
               <Select value={form.test_type} onValueChange={(v) => updateForm({ test_type: v })}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -657,8 +657,8 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
     return (
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold text-zinc-900 mb-1">Question Type</h3>
-          <p className="text-sm text-zinc-500">Choose the format for this question</p>
+          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Question Type</h3>
+          <p className="text-sm text-[var(--text-muted)]">Choose the format for this question</p>
         </div>
         <div className="grid gap-2 max-h-[400px] overflow-y-auto pr-1">
           {filteredTypes.map((qt) => {
@@ -670,20 +670,20 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 onClick={() => updateForm({ type: qt.value })}
                 className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all ${
                   selected
-                    ? "border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900"
-                    : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                    ? "border-[var(--foreground)] bg-[var(--elevated-bg)] ring-1 ring-[var(--foreground)]"
+                    : "border-[var(--border-color)] hover:border-[var(--border-color)] hover:bg-[var(--elevated-bg)]"
                 }`}
               >
                 <div className={`flex h-9 w-9 items-center justify-center rounded-md ${
-                  selected ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-500"
+                  selected ? "bg-[var(--foreground)] text-white" : "bg-[var(--surface)] text-[var(--text-muted)]"
                 }`}>
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm text-zinc-900">{qt.label}</div>
-                  <div className="text-xs text-zinc-500 truncate">{qt.description}</div>
+                  <div className="font-medium text-sm text-[var(--foreground)]">{qt.label}</div>
+                  <div className="text-xs text-[var(--text-muted)] truncate">{qt.description}</div>
                 </div>
-                {selected && <Check className="h-4 w-4 text-zinc-900 shrink-0" />}
+                {selected && <Check className="h-4 w-4 text-[var(--foreground)] shrink-0" />}
               </button>
             );
           })}
@@ -697,25 +697,25 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
   const renderStep3 = () => (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-zinc-900 mb-1">Question Content</h3>
-        <p className="text-sm text-zinc-500">Add the question text and context</p>
+        <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Question Content</h3>
+        <p className="text-sm text-[var(--text-muted)]">Add the question text and context</p>
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Title *</label>
+        <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Title *</label>
         <Input
           value={form.title}
           onChange={(e) => updateForm({ title: e.target.value })}
           placeholder="e.g. Q15-16 – TWO features of the accommodation"
           className="font-medium"
         />
-        <p className="text-[11px] text-zinc-400">Descriptive title for admin reference</p>
+        <p className="text-[11px] text-[var(--text-secondary)]">Descriptive title for admin reference</p>
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Instruction *</label>
+        <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Instruction *</label>
         <textarea
-          className="flex w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 min-h-[80px] resize-y"
+          className="flex w-full rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm shadow-sm placeholder:text-[var(--text-secondary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-color)] min-h-[80px] resize-y"
           value={form.instruction}
           onChange={(e) => updateForm({ instruction: e.target.value })}
           placeholder={form.type === "multiple_select"
@@ -726,9 +726,9 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Context</label>
+        <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Context</label>
         <textarea
-          className="flex w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 min-h-[60px] resize-y"
+          className="flex w-full rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm shadow-sm placeholder:text-[var(--text-secondary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-color)] min-h-[60px] resize-y"
           value={form.context}
           onChange={(e) => updateForm({ context: e.target.value })}
           placeholder="e.g. You hear two people discussing a day trip..."
@@ -737,9 +737,9 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
 
       {form.section === "reading" && (
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Passage</label>
+          <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Passage</label>
           <textarea
-            className="flex w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 min-h-[120px] resize-y font-mono text-xs"
+            className="flex w-full rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm shadow-sm placeholder:text-[var(--text-secondary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-color)] min-h-[120px] resize-y font-mono text-xs"
             value={form.passage}
             onChange={(e) => updateForm({ passage: e.target.value })}
             placeholder="Paste the reading passage text here..."
@@ -769,13 +769,13 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Tags</label>
+        <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Tags</label>
         <Input
           value={form.tags}
           onChange={(e) => updateForm({ tags: e.target.value })}
           placeholder="listening, part2, cambridge"
         />
-        <p className="text-[11px] text-zinc-400">Comma-separated tags for filtering</p>
+        <p className="text-[11px] text-[var(--text-secondary)]">Comma-separated tags for filtering</p>
       </div>
     </div>
   );
@@ -790,8 +790,8 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Answer Options</h3>
-            <p className="text-sm text-zinc-500">Add options and select the correct one</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Answer Options</h3>
+            <p className="text-sm text-[var(--text-muted)]">Add options and select the correct one</p>
           </div>
           <div className="space-y-2">
             {form.options.map((opt, i) => (
@@ -801,7 +801,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-all ${
                     form.correct_option === opt.label
                       ? "border-green-500 bg-green-500 text-white"
-                      : "border-zinc-300 text-zinc-400 hover:border-zinc-400"
+                      : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--border-color)]"
                   }`}
                 >
                   {opt.label}
@@ -829,7 +829,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                       });
                     }}
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                    <Trash2 className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                   </Button>
                 )}
               </div>
@@ -863,11 +863,11 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-5">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Multiple Select Options</h3>
-            <p className="text-sm text-zinc-500">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Multiple Select Options</h3>
+            <p className="text-sm text-[var(--text-muted)]">
               Add options (A–E typically) and select the correct answers.
               <br />
-              <span className="text-zinc-400">e.g. Questions 19 &amp; 20: Choose TWO correct letters</span>
+              <span className="text-[var(--text-secondary)]">e.g. Questions 19 &amp; 20: Choose TWO correct letters</span>
             </p>
           </div>
 
@@ -886,7 +886,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   });
                 }}
               >
-                <SelectTrigger className="w-20 h-8 bg-white">
+                <SelectTrigger className="w-20 h-8 bg-[var(--card-bg)]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -925,12 +925,12 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 text-sm font-bold transition-all ${
                       isCorrect
                         ? "border-green-500 bg-green-500 text-white shadow-sm"
-                        : "border-zinc-300 text-zinc-400 hover:border-zinc-400 hover:bg-zinc-50"
+                        : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--border-color)] hover:bg-[var(--elevated-bg)]"
                     }`}
                   >
                     {isCorrect ? <Check className="h-4 w-4" /> : opt.label}
                   </button>
-                  <span className="text-sm font-medium text-zinc-600 w-6">{opt.label}</span>
+                  <span className="text-sm font-medium text-[var(--text-muted)] w-6">{opt.label}</span>
                   <Input
                     className="flex-1"
                     value={opt.text}
@@ -954,7 +954,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                         });
                       }}
                     >
-                      <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                      <Trash2 className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                     </Button>
                   )}
                 </div>
@@ -997,10 +997,10 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">
               {t === "note_completion" ? "Note" : "Sentence"} Items
             </h3>
-            <p className="text-sm text-zinc-500">Add the text before/after the blank and the correct answer</p>
+            <p className="text-sm text-[var(--text-muted)]">Add the text before/after the blank and the correct answer</p>
           </div>
           {form.sentences.map((s, i) => (
             <Card key={i} className="overflow-hidden">
@@ -1011,7 +1011,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                       updateForm({ sentences: form.sentences.filter((_, j) => j !== i) });
                     }}>
-                      <Trash2 className="h-3 w-3 text-zinc-400" />
+                      <Trash2 className="h-3 w-3 text-[var(--text-secondary)]" />
                     </Button>
                   )}
                 </div>
@@ -1064,11 +1064,11 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Form Fields</h3>
-            <p className="text-sm text-zinc-500">Add form fields with labels and answers</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Form Fields</h3>
+            <p className="text-sm text-[var(--text-muted)]">Add form fields with labels and answers</p>
           </div>
           {form.form_fields.map((f, i) => (
-            <div key={i} className="flex items-end gap-2 rounded-lg border border-zinc-200 p-3">
+            <div key={i} className="flex items-end gap-2 rounded-lg border border-[var(--border-color)] p-3">
               <div className="flex-1 space-y-1">
                 <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Label</label>
                 <Input placeholder="Full name" value={f.label} onChange={(e) => {
@@ -1101,7 +1101,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <Button variant="ghost" size="icon" className="shrink-0" onClick={() => {
                   updateForm({ form_fields: form.form_fields.filter((_, j) => j !== i) });
                 }}>
-                  <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                  <Trash2 className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                 </Button>
               )}
             </div>
@@ -1120,18 +1120,18 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Short Answer Items</h3>
-            <p className="text-sm text-zinc-500">Add questions with short answers</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Short Answer Items</h3>
+            <p className="text-sm text-[var(--text-muted)]">Add questions with short answers</p>
           </div>
           {form.short_items.map((s, i) => (
-            <div key={i} className="rounded-lg border border-zinc-200 p-3 space-y-2">
+            <div key={i} className="rounded-lg border border-[var(--border-color)] p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="text-xs">Q{i + 1}</Badge>
                 {form.short_items.length > 1 && (
                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                     updateForm({ short_items: form.short_items.filter((_, j) => j !== i) });
                   }}>
-                    <Trash2 className="h-3 w-3 text-zinc-400" />
+                    <Trash2 className="h-3 w-3 text-[var(--text-secondary)]" />
                   </Button>
                 )}
               </div>
@@ -1168,25 +1168,25 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">
               {isYN ? "Yes / No / Not Given" : "True / False / Not Given"} Statements
             </h3>
-            <p className="text-sm text-zinc-500">Add statements and mark each as {answerOptions.join(" / ")}</p>
+            <p className="text-sm text-[var(--text-muted)]">Add statements and mark each as {answerOptions.join(" / ")}</p>
           </div>
           {form.tfng_items.map((item, i) => (
-            <div key={i} className="rounded-lg border border-zinc-200 p-3 space-y-2">
+            <div key={i} className="rounded-lg border border-[var(--border-color)] p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="text-xs">Statement {i + 1}</Badge>
                 {form.tfng_items.length > 1 && (
                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                     updateForm({ tfng_items: form.tfng_items.filter((_, j) => j !== i) });
                   }}>
-                    <Trash2 className="h-3 w-3 text-zinc-400" />
+                    <Trash2 className="h-3 w-3 text-[var(--text-secondary)]" />
                   </Button>
                 )}
               </div>
               <textarea
-                className="flex w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm min-h-[60px] resize-y focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400"
+                className="flex w-full rounded-md border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm min-h-[60px] resize-y focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-color)]"
                 placeholder="Statement..."
                 value={item.statement}
                 onChange={(e) => {
@@ -1205,11 +1205,11 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                     className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                       item.answer === ans
                         ? ans === "NOT GIVEN"
-                          ? "bg-zinc-700 text-white"
+                          ? "bg-[var(--text-muted)] text-white"
                           : ans === "TRUE" || ans === "YES"
                           ? "bg-green-500 text-white"
                           : "bg-red-500 text-white"
-                        : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                        : "bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-secondary)]"
                     }`}
                   >
                     {ans}
@@ -1232,14 +1232,14 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Matching Items</h3>
-            <p className="text-sm text-zinc-500">Add items and their matching answers</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Matching Items</h3>
+            <p className="text-sm text-[var(--text-muted)]">Add items and their matching answers</p>
           </div>
           <div className="space-y-3">
-            <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Answer Options</h4>
+            <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Answer Options</h4>
             {form.options.map((opt, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-sm font-bold text-zinc-400 w-6">{opt.label}</span>
+                <span className="text-sm font-bold text-[var(--text-secondary)] w-6">{opt.label}</span>
                 <Input className="flex-1" value={opt.text} placeholder={`Option ${opt.label}...`}
                   onChange={(e) => {
                     const no = [...form.options]; no[i] = { ...no[i], text: e.target.value };
@@ -1250,7 +1250,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   <Button variant="ghost" size="icon" className="shrink-0" onClick={() => {
                     updateForm({ options: form.options.filter((_, j) => j !== i) });
                   }}>
-                    <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                    <Trash2 className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                   </Button>
                 )}
               </div>
@@ -1263,10 +1263,10 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
             </Button>
           </div>
           <div className="border-t pt-3 space-y-3">
-            <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Items to Match</h4>
+            <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Items to Match</h4>
             {form.matching_items.map((m, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-sm font-medium text-zinc-500 w-6">{i + 1}.</span>
+                <span className="text-sm font-medium text-[var(--text-muted)] w-6">{i + 1}.</span>
                 <Input className="flex-1" placeholder="Item..." value={m.item} onChange={(e) => {
                   const nm = [...form.matching_items]; nm[i] = { ...nm[i], item: e.target.value };
                   updateForm({ matching_items: nm });
@@ -1286,7 +1286,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   <Button variant="ghost" size="icon" className="shrink-0" onClick={() => {
                     updateForm({ matching_items: form.matching_items.filter((_, j) => j !== i) });
                   }}>
-                    <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                    <Trash2 className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                   </Button>
                 )}
               </div>
@@ -1306,14 +1306,14 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Matching Headings</h3>
-            <p className="text-sm text-zinc-500">Add heading options and then match paragraphs</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Matching Headings</h3>
+            <p className="text-sm text-[var(--text-muted)]">Add heading options and then match paragraphs</p>
           </div>
           <div className="space-y-3">
-            <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Heading Options (i, ii, iii...)</h4>
+            <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Heading Options (i, ii, iii...)</h4>
             {form.heading_options.map((opt, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-sm font-bold text-zinc-400 w-8">{opt.label}</span>
+                <span className="text-sm font-bold text-[var(--text-secondary)] w-8">{opt.label}</span>
                 <Input className="flex-1" value={opt.text} placeholder="Heading text..."
                   onChange={(e) => {
                     const no = [...form.heading_options]; no[i] = { ...no[i], text: e.target.value };
@@ -1324,7 +1324,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   <Button variant="ghost" size="icon" className="shrink-0" onClick={() => {
                     updateForm({ heading_options: form.heading_options.filter((_, j) => j !== i) });
                   }}>
-                    <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                    <Trash2 className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                   </Button>
                 )}
               </div>
@@ -1338,7 +1338,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
             </Button>
           </div>
           <div className="border-t pt-3 space-y-3">
-            <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Paragraphs</h4>
+            <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Paragraphs</h4>
             {form.heading_items.map((h, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Input className="flex-1" placeholder="Paragraph A" value={h.paragraph_label} onChange={(e) => {
@@ -1360,7 +1360,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   <Button variant="ghost" size="icon" className="shrink-0" onClick={() => {
                     updateForm({ heading_items: form.heading_items.filter((_, j) => j !== i) });
                   }}>
-                    <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                    <Trash2 className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                   </Button>
                 )}
               </div>
@@ -1381,11 +1381,11 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Table Cells</h3>
-            <p className="text-sm text-zinc-500">Add table cells with row/column headers and answers</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Table Cells</h3>
+            <p className="text-sm text-[var(--text-muted)]">Add table cells with row/column headers and answers</p>
           </div>
           {form.table_cells.map((c, i) => (
-            <div key={i} className="rounded-lg border border-zinc-200 p-3 grid grid-cols-3 gap-2">
+            <div key={i} className="rounded-lg border border-[var(--border-color)] p-3 grid grid-cols-3 gap-2">
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Row Header</label>
                 <Input placeholder="Monday" value={c.row_header} onChange={(e) => {
@@ -1415,7 +1415,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                     updateForm({ table_cells: form.table_cells.filter((_, j) => j !== i) });
                   }}>
-                    <Trash2 className="h-3 w-3 text-zinc-400" />
+                    <Trash2 className="h-3 w-3 text-[var(--text-secondary)]" />
                   </Button>
                 </div>
               )}
@@ -1435,8 +1435,8 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Summary Items</h3>
-            <p className="text-sm text-zinc-500">Add summary blanks with optional word bank</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Summary Items</h3>
+            <p className="text-sm text-[var(--text-muted)]">Add summary blanks with optional word bank</p>
           </div>
           {form.summary_items.map((s, i) => (
             <Card key={i} className="overflow-hidden">
@@ -1447,7 +1447,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                       updateForm({ summary_items: form.summary_items.filter((_, j) => j !== i) });
                     }}>
-                      <Trash2 className="h-3 w-3 text-zinc-400" />
+                      <Trash2 className="h-3 w-3 text-[var(--text-secondary)]" />
                     </Button>
                   )}
                 </div>
@@ -1487,11 +1487,11 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Map/Label Slots</h3>
-            <p className="text-sm text-zinc-500">Add numbered slots with positions and answers</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Map/Label Slots</h3>
+            <p className="text-sm text-[var(--text-muted)]">Add numbered slots with positions and answers</p>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Word Box (optional, comma-separated)</label>
+            <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Word Box (optional, comma-separated)</label>
             <Input
               value={form.map_word_box.join(", ")}
               onChange={(e) => updateForm({ map_word_box: e.target.value.split(",").map((w) => w.trim()).filter(Boolean) })}
@@ -1499,7 +1499,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
             />
           </div>
           {form.map_slots.map((s, i) => (
-            <div key={i} className="rounded-lg border border-zinc-200 p-3 grid grid-cols-3 gap-2">
+            <div key={i} className="rounded-lg border border-[var(--border-color)] p-3 grid grid-cols-3 gap-2">
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Label</label>
                 <Input value={s.slot_label} onChange={(e) => {
@@ -1529,7 +1529,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                     updateForm({ map_slots: form.map_slots.filter((_, j) => j !== i) });
                   }}>
-                    <Trash2 className="h-3 w-3 text-zinc-400" />
+                    <Trash2 className="h-3 w-3 text-[var(--text-secondary)]" />
                   </Button>
                 </div>
               )}
@@ -1550,17 +1550,17 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Flow Chart Steps</h3>
-            <p className="text-sm text-zinc-500">Add steps, toggle blanks, and set answers</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Flow Chart Steps</h3>
+            <p className="text-sm text-[var(--text-muted)]">Add steps, toggle blanks, and set answers</p>
           </div>
           {form.flow_steps.map((s, i) => (
-            <div key={i} className="rounded-lg border border-zinc-200 p-3 space-y-2">
+            <div key={i} className="rounded-lg border border-[var(--border-color)] p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="text-xs">Step {s.step_number}</Badge>
                 <div className="flex items-center gap-2">
                   <label className="flex items-center gap-1.5 text-xs">
                     <input type="checkbox" checked={s.is_blank}
-                      className="rounded border-zinc-300"
+                      className="rounded border-[var(--border-color)]"
                       onChange={(e) => {
                         const ns = [...form.flow_steps]; ns[i] = { ...ns[i], is_blank: e.target.checked };
                         updateForm({ flow_steps: ns });
@@ -1572,7 +1572,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                       updateForm({ flow_steps: form.flow_steps.filter((_, j) => j !== i) });
                     }}>
-                      <Trash2 className="h-3 w-3 text-zinc-400" />
+                      <Trash2 className="h-3 w-3 text-[var(--text-secondary)]" />
                     </Button>
                   )}
                 </div>
@@ -1612,18 +1612,18 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return (
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1">Pick from List</h3>
-            <p className="text-sm text-zinc-500">Add questions with multiple correct answers from a list</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Pick from List</h3>
+            <p className="text-sm text-[var(--text-muted)]">Add questions with multiple correct answers from a list</p>
           </div>
           {form.pick_items.map((p, i) => (
-            <div key={i} className="rounded-lg border border-zinc-200 p-3 space-y-2">
+            <div key={i} className="rounded-lg border border-[var(--border-color)] p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="text-xs">Question {i + 1}</Badge>
                 {form.pick_items.length > 1 && (
                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                     updateForm({ pick_items: form.pick_items.filter((_, j) => j !== i) });
                   }}>
-                    <Trash2 className="h-3 w-3 text-zinc-400" />
+                    <Trash2 className="h-3 w-3 text-[var(--text-secondary)]" />
                   </Button>
                 )}
               </div>
@@ -1655,15 +1655,15 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
     if (t === "speaking_cue_card") {
       return (
         <div className="space-y-5">
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-center">
-            <p className="text-sm text-zinc-500">No specific answer configuration for this question type.</p>
-            <p className="text-xs text-zinc-400 mt-0.5">You can proceed to review.</p>
+          <div className="rounded-lg border border-[var(--border-color)] bg-[var(--elevated-bg)] px-4 py-3 text-center">
+            <p className="text-sm text-[var(--text-muted)]">No specific answer configuration for this question type.</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">You can proceed to review.</p>
           </div>
           {/* Topic */}
           <div className="space-y-2">
             <div>
-              <h3 className="text-sm font-semibold text-zinc-900">Cue Card Topic</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">The main topic the candidate should talk about</p>
+              <h3 className="text-sm font-semibold text-[var(--foreground)]">Cue Card Topic</h3>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">The main topic the candidate should talk about</p>
             </div>
             <Input
               value={form.cue_card_topic}
@@ -1674,12 +1674,12 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
           {/* Bullet points */}
           <div className="space-y-3">
             <div>
-              <h3 className="text-sm font-semibold text-zinc-900">Bullet Points</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">List the guiding bullet points on the cue card</p>
+              <h3 className="text-sm font-semibold text-[var(--foreground)]">Bullet Points</h3>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">List the guiding bullet points on the cue card</p>
             </div>
             {(form.cue_card_bullets ?? [""]).map((b, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-400 w-5 shrink-0">•</span>
+                <span className="text-xs font-medium text-[var(--text-secondary)] w-5 shrink-0">•</span>
                 <Input
                   className="flex-1"
                   value={b}
@@ -1697,7 +1697,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                     className="shrink-0"
                     onClick={() => updateForm({ cue_card_bullets: (form.cue_card_bullets ?? [""]).filter((_, j) => j !== i) })}
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                    <Trash2 className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                   </Button>
                 )}
               </div>
@@ -1713,8 +1713,8 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
           {/* Follow-up */}
           <div className="space-y-2">
             <div>
-              <h3 className="text-sm font-semibold text-zinc-900">Follow-up Question <span className="text-zinc-400 font-normal">(optional)</span></h3>
-              <p className="text-xs text-zinc-500 mt-0.5">Question asked after the candidate finishes speaking</p>
+              <h3 className="text-sm font-semibold text-[var(--foreground)]">Follow-up Question <span className="text-[var(--text-secondary)] font-normal">(optional)</span></h3>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">Question asked after the candidate finishes speaking</p>
             </div>
             <Input
               value={form.cue_card_follow_up}
@@ -1734,18 +1734,18 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       }[t];
       return (
         <div className="space-y-4">
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-center">
-            <p className="text-sm text-zinc-500">No specific answer configuration for this question type.</p>
-            <p className="text-xs text-zinc-400 mt-0.5">You can proceed to review.</p>
+          <div className="rounded-lg border border-[var(--border-color)] bg-[var(--elevated-bg)] px-4 py-3 text-center">
+            <p className="text-sm text-[var(--text-muted)]">No specific answer configuration for this question type.</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">You can proceed to review.</p>
           </div>
           <div className="space-y-3">
             <div>
-              <h3 className="text-sm font-semibold text-zinc-900">{labels.title}</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">{labels.sub}</p>
+              <h3 className="text-sm font-semibold text-[var(--foreground)]">{labels.title}</h3>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">{labels.sub}</p>
             </div>
             {(form.speaking_questions ?? [""]).map((q, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-400 w-5 shrink-0">{i + 1}.</span>
+                <span className="text-xs font-medium text-[var(--text-secondary)] w-5 shrink-0">{i + 1}.</span>
                 <Input
                   className="flex-1"
                   value={q}
@@ -1763,7 +1763,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                     className="shrink-0"
                     onClick={() => updateForm({ speaking_questions: (form.speaking_questions ?? [""]).filter((_, j) => j !== i) })}
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+                    <Trash2 className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
                   </Button>
                 )}
               </div>
@@ -1782,7 +1782,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
 
     // ── Default fallback ────────────────────────────────
     return (
-      <div className="text-center py-8 text-zinc-400">
+      <div className="text-center py-8 text-[var(--text-secondary)]">
         <p>No specific answer configuration for this question type.</p>
         <p className="text-xs mt-1">You can proceed to review.</p>
       </div>
@@ -1799,23 +1799,23 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
     return (
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold text-zinc-900 mb-1">Review & Create</h3>
-          <p className="text-sm text-zinc-500">Check everything before creating the question</p>
+          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Review & Create</h3>
+          <p className="text-sm text-[var(--text-muted)]">Check everything before creating the question</p>
         </div>
 
         {error && (
           <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-600">{error}</div>
         )}
 
-        <div className="rounded-xl border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
-          <div className="flex items-center gap-3 p-4 bg-zinc-50">
+        <div className="rounded-xl border border-[var(--border-color)] divide-y divide-[var(--border-subtle)] overflow-hidden">
+          <div className="flex items-center gap-3 p-4 bg-[var(--elevated-bg)]">
             {sectionInfo && (
               <div className={`flex h-8 w-8 items-center justify-center rounded-md ${sectionInfo.color} text-white`}>
                 {(() => { const Icon = sectionInfo.icon; return <Icon className="h-4 w-4" />; })()}
               </div>
             )}
             <div>
-              <div className="font-semibold text-zinc-900">{form.title}</div>
+              <div className="font-semibold text-[var(--foreground)]">{form.title}</div>
               <div className="flex items-center gap-2 mt-0.5">
                 <Badge variant="secondary" className="text-[10px] capitalize">{sectionInfo?.label}</Badge>
                 <Badge variant="secondary" className="text-[10px]">{partInfo?.label}</Badge>
@@ -1826,25 +1826,25 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
 
           <div className="p-4 space-y-3 text-sm">
             <div>
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Instruction</span>
-              <p className="text-zinc-700 mt-0.5">{form.instruction}</p>
+              <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Instruction</span>
+              <p className="text-[var(--text-secondary)] mt-0.5">{form.instruction}</p>
             </div>
             {form.context && (
               <div>
-                <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Context</span>
-                <p className="text-zinc-600 mt-0.5">{form.context}</p>
+                <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Context</span>
+                <p className="text-[var(--text-muted)] mt-0.5">{form.context}</p>
               </div>
             )}
           </div>
 
           <div className="p-4">
-            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Answer Preview</span>
+            <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Answer Preview</span>
             <div className="mt-2">
               {form.type === "multiple_choice" && (
                 <div className="space-y-1">
                   {form.options.map((o) => (
                     <div key={o.label} className={`flex items-center gap-2 rounded px-2 py-1 text-sm ${
-                      form.correct_option === o.label ? "bg-green-50 text-green-700 font-medium" : "text-zinc-600"
+                      form.correct_option === o.label ? "bg-green-50 text-green-700 font-medium" : "text-[var(--text-muted)]"
                     }`}>
                       <span className="font-bold">{o.label}.</span> {o.text}
                       {form.correct_option === o.label && <Check className="h-3.5 w-3.5 ml-auto" />}
@@ -1858,14 +1858,14 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                     const isCorrect = form.correct_options.includes(o.label);
                     return (
                       <div key={o.label} className={`flex items-center gap-2 rounded px-2 py-1 text-sm ${
-                        isCorrect ? "bg-green-50 text-green-700 font-medium" : "text-zinc-600"
+                        isCorrect ? "bg-green-50 text-green-700 font-medium" : "text-[var(--text-muted)]"
                       }`}>
                         <span className="font-bold">{o.label}.</span> {o.text}
                         {isCorrect && <Check className="h-3.5 w-3.5 ml-auto" />}
                       </div>
                     );
                   })}
-                  <p className="text-xs text-zinc-400 mt-2">
+                  <p className="text-xs text-[var(--text-secondary)] mt-2">
                     Correct: {form.correct_options.sort().join(", ")} ({form.correct_options.length} answers)
                   </p>
                 </div>
@@ -1873,7 +1873,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
               {(form.type === "note_completion" || form.type === "sentence_completion") && (
                 <div className="space-y-1">
                   {form.sentences.map((s, i) => (
-                    <p key={i} className="text-sm text-zinc-600">
+                    <p key={i} className="text-sm text-[var(--text-muted)]">
                       {s.before} <span className="font-bold text-amber-700 bg-amber-50 px-1 rounded">{s.answer}</span> {s.after}
                     </p>
                   ))}
@@ -1883,7 +1883,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <div className="space-y-1">
                   {form.tfng_items.map((item, i) => (
                     <div key={i} className="flex items-center justify-between text-sm">
-                      <span className="text-zinc-600 truncate max-w-[250px]">{item.statement}</span>
+                      <span className="text-[var(--text-muted)] truncate max-w-[250px]">{item.statement}</span>
                       <Badge variant={item.answer === "TRUE" || item.answer === "YES" ? "success" : item.answer === "NOT GIVEN" ? "secondary" : "destructive"} className="text-[10px]">
                         {item.answer}
                       </Badge>
@@ -1895,8 +1895,8 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <div className="space-y-1">
                   {form.form_fields.map((f, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className="text-zinc-500 w-28 truncate">{f.label}:</span>
-                      {f.prefix && <span className="text-zinc-400">{f.prefix}</span>}
+                      <span className="text-[var(--text-muted)] w-28 truncate">{f.label}:</span>
+                      {f.prefix && <span className="text-[var(--text-secondary)]">{f.prefix}</span>}
                       <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{f.answer}</span>
                     </div>
                   ))}
@@ -1906,7 +1906,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <div className="space-y-1">
                   {form.table_cells.map((c, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className="text-zinc-400 text-xs">[{c.row_header} / {c.col_header}]</span>
+                      <span className="text-[var(--text-secondary)] text-xs">[{c.row_header} / {c.col_header}]</span>
                       <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{c.answer}</span>
                     </div>
                   ))}
@@ -1916,8 +1916,8 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <div className="space-y-1">
                   {form.flow_steps.map((s, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className="text-zinc-400 text-xs w-6">{s.step_number}.</span>
-                      <span className="text-zinc-600 flex-1">{s.description}</span>
+                      <span className="text-[var(--text-secondary)] text-xs w-6">{s.step_number}.</span>
+                      <span className="text-[var(--text-muted)] flex-1">{s.description}</span>
                       {s.is_blank && <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{s.answer}</span>}
                     </div>
                   ))}
@@ -1926,7 +1926,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
               {(form.type === "summary_completion") && (
                 <div className="space-y-1">
                   {form.summary_items.map((s, i) => (
-                    <p key={i} className="text-sm text-zinc-600">
+                    <p key={i} className="text-sm text-[var(--text-muted)]">
                       {s.before} <span className="font-bold text-amber-700 bg-amber-50 px-1 rounded">{s.answer}</span> {s.after}
                     </p>
                   ))}
@@ -1936,7 +1936,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <div className="space-y-1">
                   {form.short_items.map((s, i) => (
                     <div key={i} className="text-sm">
-                      <span className="text-zinc-600">{i + 1}. {s.question}</span>
+                      <span className="text-[var(--text-muted)]">{i + 1}. {s.question}</span>
                       <span className="ml-2 font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{s.answer}</span>
                     </div>
                   ))}
@@ -1946,14 +1946,14 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <div className="space-y-1">
                   {form.map_slots.map((s, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className="text-zinc-400 text-xs w-6">{s.slot_label}.</span>
+                      <span className="text-[var(--text-secondary)] text-xs w-6">{s.slot_label}.</span>
                       <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{s.answer}</span>
                     </div>
                   ))}
                   {form.map_word_box.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1 pt-1 border-t border-zinc-100">
+                    <div className="flex flex-wrap gap-1 mt-1 pt-1 border-t border-[var(--border-subtle)]">
                       {form.map_word_box.map((w, i) => (
-                        <span key={i} className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded">{w}</span>
+                        <span key={i} className="text-xs bg-[var(--surface)] text-[var(--text-muted)] px-2 py-0.5 rounded">{w}</span>
                       ))}
                     </div>
                   )}
@@ -1963,7 +1963,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <div className="space-y-1">
                   {form.matching_items.map((m, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className="text-zinc-600 flex-1">{m.item}</span>
+                      <span className="text-[var(--text-muted)] flex-1">{m.item}</span>
                       <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{m.answer}</span>
                     </div>
                   ))}
@@ -1973,7 +1973,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <div className="space-y-1">
                   {form.heading_items.map((h, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className="text-zinc-500 w-24 text-xs">{h.paragraph_label}</span>
+                      <span className="text-[var(--text-muted)] w-24 text-xs">{h.paragraph_label}</span>
                       <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{h.answer}</span>
                     </div>
                   ))}
@@ -1983,7 +1983,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <div className="space-y-2">
                   {form.pick_items.map((p, i) => (
                     <div key={i} className="text-sm">
-                      <span className="text-zinc-600">{i + 1}. {p.question}</span>
+                      <span className="text-[var(--text-muted)]">{i + 1}. {p.question}</span>
                       <div className="flex flex-wrap gap-1 mt-0.5">
                         {p.answers.map((a) => (
                           <span key={a} className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-xs">{a}</span>
@@ -1998,35 +1998,35 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   {(form.speaking_questions ?? []).filter((q) => q.trim()).length > 0 ? (
                     (form.speaking_questions ?? []).filter((q) => q.trim()).map((q, i) => (
                       <div key={i} className="flex items-start gap-2 text-sm">
-                        <span className="text-zinc-400 text-xs w-5 shrink-0 pt-0.5">{i + 1}.</span>
-                        <span className="text-zinc-600">{q}</span>
+                        <span className="text-[var(--text-secondary)] text-xs w-5 shrink-0 pt-0.5">{i + 1}.</span>
+                        <span className="text-[var(--text-muted)]">{q}</span>
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-zinc-400 italic">No questions added</p>
+                    <p className="text-xs text-[var(--text-secondary)] italic">No questions added</p>
                   )}
                 </div>
               )}
               {form.type === "speaking_cue_card" && (
                 <div className="space-y-2">
                   {form.cue_card_topic.trim() && (
-                    <p className="text-sm text-zinc-700 font-medium">{form.cue_card_topic}</p>
+                    <p className="text-sm text-[var(--text-secondary)] font-medium">{form.cue_card_topic}</p>
                   )}
                   {(form.cue_card_bullets ?? []).filter((b) => b.trim()).length > 0 && (
                     <ul className="space-y-0.5 pl-2">
                       {(form.cue_card_bullets ?? []).filter((b) => b.trim()).map((b, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-zinc-600">
-                          <span className="text-zinc-400 shrink-0">•</span>
+                        <li key={i} className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
+                          <span className="text-[var(--text-secondary)] shrink-0">•</span>
                           <span>{b}</span>
                         </li>
                       ))}
                     </ul>
                   )}
                   {form.cue_card_follow_up.trim() && (
-                    <p className="text-xs text-zinc-500 italic">Follow-up: {form.cue_card_follow_up}</p>
+                    <p className="text-xs text-[var(--text-muted)] italic">Follow-up: {form.cue_card_follow_up}</p>
                   )}
                   {!form.cue_card_topic.trim() && (form.cue_card_bullets ?? []).filter((b) => b.trim()).length === 0 && (
-                    <p className="text-xs text-zinc-400 italic">No cue card content added</p>
+                    <p className="text-xs text-[var(--text-secondary)] italic">No cue card content added</p>
                   )}
                 </div>
               )}
@@ -2035,7 +2035,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
 
           {form.tags && (
             <div className="p-4 flex items-center gap-2">
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider mr-2">Tags</span>
+              <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider mr-2">Tags</span>
               {form.tags.split(",").map((t) => t.trim()).filter(Boolean).map((tag) => (
                 <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
               ))}
@@ -2054,12 +2054,12 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative ml-auto flex h-full w-full max-w-2xl flex-col bg-white text-zinc-900 shadow-2xl animate-in slide-in-from-right duration-300">
+      <div className="relative ml-auto flex h-full w-full max-w-2xl flex-col bg-[var(--card-bg)] text-[var(--foreground)] shadow-2xl animate-in slide-in-from-right duration-300">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-[var(--border-color)] px-6 py-4">
           <div>
-            <h2 className="text-lg font-bold text-zinc-900">{isEditing ? "Edit Question" : "Create Question"}</h2>
-            <p className="text-xs text-zinc-500">Step {step} of {STEPS.length} &mdash; {STEPS[step - 1].description}</p>
+            <h2 className="text-lg font-bold text-[var(--foreground)]">{isEditing ? "Edit Question" : "Create Question"}</h2>
+            <p className="text-xs text-[var(--text-muted)]">Step {step} of {STEPS.length} &mdash; {STEPS[step - 1].description}</p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
@@ -2081,7 +2081,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
         </div>
 
         {/* Footer */}
-        <div className="border-t border-zinc-200 bg-zinc-50 px-6 py-4 flex items-center justify-between">
+        <div className="border-t border-[var(--border-color)] bg-[var(--elevated-bg)] px-6 py-4 flex items-center justify-between">
           <Button
             variant="outline"
             onClick={() => step > 1 ? setStep(step - 1) : onClose()}

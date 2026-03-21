@@ -15,7 +15,7 @@ const SECTIONS = [
   { value: "listening", label: "Listening", icon: Headphones, color: "text-indigo-400 border-indigo-700 bg-indigo-950/30 hover:bg-indigo-950/50", activeColor: "border-indigo-500 bg-indigo-950/60 text-indigo-300" },
   { value: "reading",   label: "Reading",   icon: BookOpen,   color: "text-emerald-400 border-emerald-700 bg-emerald-950/30 hover:bg-emerald-950/50", activeColor: "border-emerald-500 bg-emerald-950/60 text-emerald-300" },
   { value: "writing",   label: "Writing",   icon: PenTool,    color: "text-amber-400 border-amber-700 bg-amber-950/30 hover:bg-amber-950/50", activeColor: "border-amber-500 bg-amber-950/60 text-amber-300" },
-  { value: "speaking",  label: "Speaking",  icon: Mic,        color: "text-zinc-300 border-zinc-700 bg-zinc-800/40 hover:bg-zinc-800/60", activeColor: "border-zinc-400 bg-zinc-800 text-zinc-200" },
+  { value: "speaking",  label: "Speaking",  icon: Mic,        color: "text-[var(--text-secondary)] border-[var(--border-color)] bg-[var(--surface)] hover:bg-[var(--surface-secondary)]", activeColor: "border-[var(--text-secondary)] bg-[var(--surface-secondary)] text-[var(--text-primary)]" },
 ];
 
 const SECTION_PARTS: Record<string, { value: string; label: string }[]> = {
@@ -155,8 +155,8 @@ export default function QuestionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-zinc-100">Questions</h1>
-          <p className="text-sm text-zinc-500">{data?.total ?? 0} questions in {sectionInfo.label} — {activePartLabel}</p>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">Questions</h1>
+          <p className="text-sm text-[var(--text-muted)]">{data?.total ?? 0} questions in {sectionInfo.label} — {activePartLabel}</p>
         </div>
         <Button onClick={() => setCreatorOpen(true)}>
           <Plus className="h-4 w-4" /> Add Question
@@ -165,7 +165,7 @@ export default function QuestionsPage() {
 
       {/* Step 1 — Section */}
       <div className="space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-600">Step 1 — Section</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">Step 1 — Section</p>
         <div className="grid grid-cols-4 gap-2">
           {SECTIONS.map((s) => {
             const Icon = s.icon;
@@ -187,8 +187,8 @@ export default function QuestionsPage() {
       </div>
 
       {/* Step 2 — Part */}
-      <div className={`rounded-xl border p-4 space-y-3 transition-all ${sectionInfo.activeColor.replace("text-", "border-").split(" ")[0]} bg-zinc-900/40`}>
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-600">
+      <div className={`rounded-xl border p-4 space-y-3 transition-all ${sectionInfo.activeColor.replace("text-", "border-").split(" ")[0]} bg-[var(--surface)]`}>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
           Step 2 — {sectionInfo.label} Part
         </p>
         <div className="flex flex-wrap gap-2">
@@ -201,7 +201,7 @@ export default function QuestionsPage() {
                 className={`rounded-lg border-2 px-5 py-2.5 text-sm font-semibold transition-all ${
                   isActive
                     ? sectionInfo.activeColor + " ring-1 ring-inset ring-white/10"
-                    : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+                    : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--border-color)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 {p.label}
@@ -214,7 +214,7 @@ export default function QuestionsPage() {
       {/* Step 3 — Questions */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-600">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
             Step 3 — Questions ({data?.total ?? 0})
           </p>
           <div className="flex items-center gap-2">
@@ -222,14 +222,14 @@ export default function QuestionsPage() {
               onClick={() => setGroupByTypeEnabled((v) => !v)}
               className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
                 groupByTypeEnabled
-                  ? "border-zinc-400 bg-zinc-700 text-zinc-100"
-                  : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300"
+                  ? "border-[var(--border-color)] bg-[var(--surface-secondary)] text-[var(--text-primary)]"
+                  : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--border-color)] hover:text-[var(--text-secondary)]"
               }`}
             >
               Group by type
             </button>
             <div className="relative max-w-xs w-48">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
               <Input
                 placeholder="Search…"
                 value={search}
@@ -245,32 +245,32 @@ export default function QuestionsPage() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-600" />
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
             </div>
           ) : groupByTypeEnabled && data?.items.length ? (
-            <div className="divide-y divide-zinc-800">
+            <div className="divide-y divide-[var(--border-color)]">
               {groupByType(data.items).map(({ type, label, questions }) => (
                 <div key={type}>
-                  <div className="flex items-center gap-2 bg-zinc-900/60 px-4 py-2">
-                    <span className="text-xs font-semibold text-zinc-300">{label}</span>
-                    <span className="rounded border border-zinc-700 px-1.5 py-0 text-[10px] text-zinc-500">{questions.length}</span>
+                  <div className="flex items-center gap-2 bg-[var(--surface)] px-4 py-2">
+                    <span className="text-xs font-semibold text-[var(--text-secondary)]">{label}</span>
+                    <span className="rounded border border-[var(--border-color)] px-1.5 py-0 text-[10px] text-[var(--text-muted)]">{questions.length}</span>
                   </div>
                   <Table>
                     <TableBody>
                       {questions.map((q) => (
                         <TableRow key={q.id}>
                           <TableCell className="max-w-xs">
-                            <p className="font-medium text-zinc-200">{truncate(q.title)}</p>
+                            <p className="font-medium text-[var(--text-primary)]">{truncate(q.title)}</p>
                             {q.type === "speaking_cue_card" && (q.cue_card as { bullet_points?: string[] } | undefined)?.bullet_points?.length ? (
                               <ul className="mt-1 space-y-0.5 pl-3">
                                 {(q.cue_card as { bullet_points: string[] }).bullet_points.map((b, idx) => (
-                                  <li key={idx} className="text-zinc-500 text-xs truncate list-disc">{b}</li>
+                                  <li key={idx} className="text-[var(--text-muted)] text-xs truncate list-disc">{b}</li>
                                 ))}
                               </ul>
                             ) : q.section === "speaking" && ((q.speaking_questions as { question: string }[] | undefined)?.filter((i) => i.question?.trim()).length ?? 0) > 0 && (
                               <ol className="mt-1 space-y-0.5 list-decimal list-inside">
                                 {(q.speaking_questions as { question: string }[]).filter((i) => i.question?.trim()).map((item, idx) => (
-                                  <li key={idx} className="text-zinc-500 text-xs truncate">{item.question}</li>
+                                  <li key={idx} className="text-[var(--text-muted)] text-xs truncate">{item.question}</li>
                                 ))}
                               </ol>
                             )}
@@ -278,7 +278,7 @@ export default function QuestionsPage() {
                           <TableCell>
                             <Badge variant="secondary" className="capitalize">{q.module_type}</Badge>
                           </TableCell>
-                          <TableCell className="text-zinc-500 text-xs">{new Date(q.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-[var(--text-muted)] text-xs">{new Date(q.created_at).toLocaleDateString()}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="icon" onClick={() => setViewQ(q)}><Eye className="h-4 w-4" /></Button>
@@ -314,26 +314,26 @@ export default function QuestionsPage() {
                 {data?.items.map((q) => (
                   <TableRow key={q.id}>
                     <TableCell className="max-w-xs">
-                      <p className="font-medium text-zinc-200">{truncate(q.title)}</p>
+                      <p className="font-medium text-[var(--text-primary)]">{truncate(q.title)}</p>
                       {q.type === "speaking_cue_card" && (q.cue_card as { bullet_points?: string[] } | undefined)?.bullet_points?.length ? (
                         <ul className="mt-1 space-y-0.5 pl-3">
                           {(q.cue_card as { bullet_points: string[] }).bullet_points.map((b, idx) => (
-                            <li key={idx} className="text-zinc-500 text-xs truncate list-disc">{b}</li>
+                            <li key={idx} className="text-[var(--text-muted)] text-xs truncate list-disc">{b}</li>
                           ))}
                         </ul>
                       ) : q.section === "speaking" && ((q.speaking_questions as { question: string }[] | undefined)?.filter((i) => i.question?.trim()).length ?? 0) > 0 && (
                         <ol className="mt-1 space-y-0.5 list-decimal list-inside">
                           {(q.speaking_questions as { question: string }[]).filter((i) => i.question?.trim()).map((item, idx) => (
-                            <li key={idx} className="text-zinc-500 text-xs truncate">{item.question}</li>
+                            <li key={idx} className="text-[var(--text-muted)] text-xs truncate">{item.question}</li>
                           ))}
                         </ol>
                       )}
                     </TableCell>
-                    <TableCell className="text-zinc-400 text-xs">{q.type.replace(/_/g, " ")}</TableCell>
+                    <TableCell className="text-[var(--text-secondary)] text-xs">{q.type.replace(/_/g, " ")}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="capitalize">{q.module_type}</Badge>
                     </TableCell>
-                    <TableCell className="text-zinc-500 text-xs">
+                    <TableCell className="text-[var(--text-muted)] text-xs">
                       {new Date(q.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
@@ -360,7 +360,7 @@ export default function QuestionsPage() {
                 ))}
                 {!data?.items.length && (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-zinc-600">
+                    <TableCell colSpan={5} className="h-32 text-center text-[var(--text-muted)]">
                       No questions in {sectionInfo.label} — {activePartLabel}
                     </TableCell>
                   </TableRow>
@@ -373,7 +373,7 @@ export default function QuestionsPage() {
 
       {/* Pagination */}
       {data && data.total_pages > 1 && (
-        <div className="flex items-center justify-between text-sm text-zinc-500">
+        <div className="flex items-center justify-between text-sm text-[var(--text-muted)]">
           <span>Page {data.page} of {data.total_pages}</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
@@ -416,7 +416,7 @@ export default function QuestionsPage() {
                 {/* Badges */}
                 <div className="flex flex-wrap gap-2">
                   <Badge variant={sectionVariant[viewQ.section] ?? "secondary"} className="capitalize">{viewQ.section}</Badge>
-                  <Badge variant="outline" className="capitalize text-zinc-400">{viewQ.section_part.replace(/_/g, " ")}</Badge>
+                  <Badge variant="outline" className="capitalize text-[var(--text-secondary)]">{viewQ.section_part.replace(/_/g, " ")}</Badge>
                   <Badge variant="secondary">{viewQ.type.replace(/_/g, " ")}</Badge>
                   <Badge variant="secondary" className="capitalize">{viewQ.module_type}</Badge>
                 </div>
@@ -424,23 +424,23 @@ export default function QuestionsPage() {
                 {/* Context */}
                 {viewQ.context && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Context</p>
-                    <p className="text-zinc-400 text-xs leading-relaxed">{viewQ.context}</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Context</p>
+                    <p className="text-[var(--text-secondary)] text-xs leading-relaxed">{viewQ.context}</p>
                   </div>
                 )}
 
                 {/* Instruction */}
                 {viewQ.instruction && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Instruction</p>
-                    <p className="text-zinc-300">{viewQ.instruction}</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Instruction</p>
+                    <p className="text-[var(--text-secondary)]">{viewQ.instruction}</p>
                   </div>
                 )}
 
                 {/* Audio */}
                 {viewQ.audio_url && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Audio</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Audio</p>
                     <audio controls src={viewQ.audio_url} className="w-full h-8" />
                   </div>
                 )}
@@ -448,31 +448,31 @@ export default function QuestionsPage() {
                 {/* Image */}
                 {viewQ.image_url && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Image</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Image</p>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={viewQ.image_url} alt="question" className="max-h-48 rounded border border-zinc-700 object-contain" />
+                    <img src={viewQ.image_url} alt="question" className="max-h-48 rounded border border-[var(--border-color)] object-contain" />
                   </div>
                 )}
 
                 {/* Passage */}
                 {viewQ.passage && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Passage</p>
-                    <p className="max-h-40 overflow-y-auto text-zinc-400 text-xs leading-relaxed whitespace-pre-wrap">{viewQ.passage}</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Passage</p>
+                    <p className="max-h-40 overflow-y-auto text-[var(--text-secondary)] text-xs leading-relaxed whitespace-pre-wrap">{viewQ.passage}</p>
                   </div>
                 )}
 
                 {/* MCQ options */}
                 {viewQ.options && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Options</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Options</p>
                     <div className="space-y-1">
                       {viewQ.options.map((o) => {
                         const isCorrect = viewQ.correct_option
                           ? o.label === viewQ.correct_option
                           : (viewQ.correct_options as string[] | undefined)?.includes(o.label);
                         return (
-                          <div key={o.label} className={`flex gap-2 rounded px-2 py-1 text-xs ${isCorrect ? "bg-emerald-950/50 text-emerald-300" : "text-zinc-400"}`}>
+                          <div key={o.label} className={`flex gap-2 rounded px-2 py-1 text-xs ${isCorrect ? "bg-emerald-950/50 text-emerald-300" : "text-[var(--text-secondary)]"}`}>
                             <span className="font-bold">{o.label}.</span> {o.text}
                           </div>
                         );
@@ -484,10 +484,10 @@ export default function QuestionsPage() {
                 {/* Sentences / Note completion */}
                 {sentences && sentences.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Sentences</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Sentences</p>
                     <div className="space-y-1">
                       {sentences.map((s, i) => (
-                        <div key={i} className="text-xs text-zinc-300">
+                        <div key={i} className="text-xs text-[var(--text-secondary)]">
                           {s.before} <span className="rounded bg-emerald-950/50 text-emerald-300 px-1">{s.answer}</span> {s.after}
                         </div>
                       ))}
@@ -498,12 +498,12 @@ export default function QuestionsPage() {
                 {/* Summary completion */}
                 {summaryItems && summaryItems.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Summary Items</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Summary Items</p>
                     <div className="space-y-1">
                       {summaryItems.map((s, i) => (
-                        <div key={i} className="text-xs text-zinc-300">
+                        <div key={i} className="text-xs text-[var(--text-secondary)]">
                           {s.before} <span className="rounded bg-emerald-950/50 text-emerald-300 px-1">{s.answer}</span> {s.after}
-                          {s.word_options && <span className="ml-2 text-zinc-500">({s.word_options})</span>}
+                          {s.word_options && <span className="ml-2 text-[var(--text-muted)]">({s.word_options})</span>}
                         </div>
                       ))}
                     </div>
@@ -513,15 +513,15 @@ export default function QuestionsPage() {
                 {/* Form completion */}
                 {formFields && formFields.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Form Fields</p>
-                    <div className="rounded border border-zinc-700 overflow-hidden">
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Form Fields</p>
+                    <div className="rounded border border-[var(--border-color)] overflow-hidden">
                       <table className="w-full text-xs">
-                        <thead><tr className="border-b border-zinc-700 bg-zinc-800/50"><th className="px-2 py-1 text-left text-zinc-400">Label</th><th className="px-2 py-1 text-left text-zinc-400">Prefix</th><th className="px-2 py-1 text-left text-emerald-400">Answer</th></tr></thead>
+                        <thead><tr className="border-b border-[var(--border-color)] bg-[var(--surface)]"><th className="px-2 py-1 text-left text-[var(--text-secondary)]">Label</th><th className="px-2 py-1 text-left text-[var(--text-secondary)]">Prefix</th><th className="px-2 py-1 text-left text-emerald-400">Answer</th></tr></thead>
                         <tbody>
                           {formFields.map((f, i) => (
-                            <tr key={i} className="border-b border-zinc-800 last:border-0">
-                              <td className="px-2 py-1 text-zinc-300">{f.label}</td>
-                              <td className="px-2 py-1 text-zinc-400">{f.prefix}</td>
+                            <tr key={i} className="border-b border-[var(--border-color)] last:border-0">
+                              <td className="px-2 py-1 text-[var(--text-secondary)]">{f.label}</td>
+                              <td className="px-2 py-1 text-[var(--text-secondary)]">{f.prefix}</td>
                               <td className="px-2 py-1 text-emerald-300">{f.answer}</td>
                             </tr>
                           ))}
@@ -534,15 +534,15 @@ export default function QuestionsPage() {
                 {/* Table completion */}
                 {tableCells && tableCells.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Table Cells</p>
-                    <div className="rounded border border-zinc-700 overflow-hidden">
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Table Cells</p>
+                    <div className="rounded border border-[var(--border-color)] overflow-hidden">
                       <table className="w-full text-xs">
-                        <thead><tr className="border-b border-zinc-700 bg-zinc-800/50"><th className="px-2 py-1 text-left text-zinc-400">Row</th><th className="px-2 py-1 text-left text-zinc-400">Column</th><th className="px-2 py-1 text-left text-emerald-400">Answer</th></tr></thead>
+                        <thead><tr className="border-b border-[var(--border-color)] bg-[var(--surface)]"><th className="px-2 py-1 text-left text-[var(--text-secondary)]">Row</th><th className="px-2 py-1 text-left text-[var(--text-secondary)]">Column</th><th className="px-2 py-1 text-left text-emerald-400">Answer</th></tr></thead>
                         <tbody>
                           {tableCells.map((c, i) => (
-                            <tr key={i} className="border-b border-zinc-800 last:border-0">
-                              <td className="px-2 py-1 text-zinc-300">{c.row_header}</td>
-                              <td className="px-2 py-1 text-zinc-400">{c.col_header}</td>
+                            <tr key={i} className="border-b border-[var(--border-color)] last:border-0">
+                              <td className="px-2 py-1 text-[var(--text-secondary)]">{c.row_header}</td>
+                              <td className="px-2 py-1 text-[var(--text-secondary)]">{c.col_header}</td>
                               <td className="px-2 py-1 text-emerald-300">{c.answer}</td>
                             </tr>
                           ))}
@@ -555,11 +555,11 @@ export default function QuestionsPage() {
                 {/* Flow chart */}
                 {flowSteps && flowSteps.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Flow Steps</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Flow Steps</p>
                     <div className="space-y-1">
                       {flowSteps.map((s, i) => (
-                        <div key={i} className="flex gap-2 text-xs text-zinc-300">
-                          <span className="text-zinc-500 w-4 shrink-0">{s.step_number}.</span>
+                        <div key={i} className="flex gap-2 text-xs text-[var(--text-secondary)]">
+                          <span className="text-[var(--text-muted)] w-4 shrink-0">{s.step_number}.</span>
                           <span>{s.description}</span>
                           {s.is_blank && <span className="rounded bg-emerald-950/50 text-emerald-300 px-1 ml-auto shrink-0">{s.answer}</span>}
                         </div>
@@ -571,11 +571,11 @@ export default function QuestionsPage() {
                 {/* Short answer */}
                 {shortItems && shortItems.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Short Answer Items</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Short Answer Items</p>
                     <div className="space-y-1">
                       {shortItems.map((s, i) => (
-                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-zinc-800/50">
-                          <span className="text-zinc-300">{s.question}</span>
+                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-[var(--surface)]">
+                          <span className="text-[var(--text-secondary)]">{s.question}</span>
                           <span className="text-emerald-300 shrink-0">{s.answer}</span>
                         </div>
                       ))}
@@ -586,17 +586,17 @@ export default function QuestionsPage() {
                 {/* Map/Plan/Diagram */}
                 {mapSlots && mapSlots.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Map Slots</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Map Slots</p>
                     {mapWordBox && mapWordBox.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
-                        {mapWordBox.map((w, i) => <span key={i} className="rounded border border-zinc-600 px-1.5 py-0.5 text-xs text-zinc-400">{w}</span>)}
+                        {mapWordBox.map((w, i) => <span key={i} className="rounded border border-[var(--border-color)] px-1.5 py-0.5 text-xs text-[var(--text-secondary)]">{w}</span>)}
                       </div>
                     )}
                     <div className="space-y-1">
                       {mapSlots.map((s, i) => (
                         <div key={i} className="flex gap-3 text-xs">
-                          <span className="text-zinc-500 font-bold w-4 shrink-0">{s.slot_label}</span>
-                          <span className="text-zinc-400">{s.position}</span>
+                          <span className="text-[var(--text-muted)] font-bold w-4 shrink-0">{s.slot_label}</span>
+                          <span className="text-[var(--text-secondary)]">{s.position}</span>
                           <span className="text-emerald-300 ml-auto shrink-0">{s.answer}</span>
                         </div>
                       ))}
@@ -607,11 +607,11 @@ export default function QuestionsPage() {
                 {/* Matching */}
                 {matchingItems && matchingItems.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Matching Items</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Matching Items</p>
                     <div className="space-y-1">
                       {matchingItems.map((m, i) => (
-                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-zinc-800/50">
-                          <span className="text-zinc-300">{m.item}</span>
+                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-[var(--surface)]">
+                          <span className="text-[var(--text-secondary)]">{m.item}</span>
                           <span className="text-emerald-300 shrink-0">{m.answer}</span>
                         </div>
                       ))}
@@ -622,16 +622,16 @@ export default function QuestionsPage() {
                 {/* Matching headings */}
                 {headingItems && headingItems.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Heading Items</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Heading Items</p>
                     {headingOptions && headingOptions.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
-                        {headingOptions.map((h) => <span key={h.label} className="rounded border border-zinc-600 px-1.5 py-0.5 text-xs text-zinc-400"><b>{h.label}</b> {h.text}</span>)}
+                        {headingOptions.map((h) => <span key={h.label} className="rounded border border-[var(--border-color)] px-1.5 py-0.5 text-xs text-[var(--text-secondary)]"><b>{h.label}</b> {h.text}</span>)}
                       </div>
                     )}
                     <div className="space-y-1">
                       {headingItems.map((h, i) => (
-                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-zinc-800/50">
-                          <span className="text-zinc-300">Paragraph {h.paragraph_label}</span>
+                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-[var(--surface)]">
+                          <span className="text-[var(--text-secondary)]">Paragraph {h.paragraph_label}</span>
                           <span className="text-emerald-300 shrink-0">{h.answer}</span>
                         </div>
                       ))}
@@ -642,11 +642,11 @@ export default function QuestionsPage() {
                 {/* TFNG */}
                 {tfngItems && tfngItems.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Statements</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Statements</p>
                     <div className="space-y-1">
                       {tfngItems.map((t, i) => (
-                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-zinc-800/50">
-                          <span className="text-zinc-300">{t.statement}</span>
+                        <div key={i} className="flex justify-between gap-4 text-xs rounded px-2 py-1 bg-[var(--surface)]">
+                          <span className="text-[var(--text-secondary)]">{t.statement}</span>
                           <span className={`shrink-0 font-medium ${t.answer === "TRUE" || t.answer === "YES" ? "text-emerald-300" : t.answer === "FALSE" || t.answer === "NO" ? "text-red-400" : "text-yellow-400"}`}>{t.answer}</span>
                         </div>
                       ))}
@@ -657,11 +657,11 @@ export default function QuestionsPage() {
                 {/* Pick from list */}
                 {pickItems && pickItems.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Pick From List</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Pick From List</p>
                     <div className="space-y-1">
                       {pickItems.map((p, i) => (
-                        <div key={i} className="text-xs rounded px-2 py-1 bg-zinc-800/50">
-                          <p className="text-zinc-300 mb-0.5">{p.question}</p>
+                        <div key={i} className="text-xs rounded px-2 py-1 bg-[var(--surface)]">
+                          <p className="text-[var(--text-secondary)] mb-0.5">{p.question}</p>
                           <p className="text-emerald-300">{p.answers.join(", ")}</p>
                         </div>
                       ))}
@@ -672,16 +672,16 @@ export default function QuestionsPage() {
                 {/* Writing prompt */}
                 {writingPrompt && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Writing Prompt</p>
-                    <div className="rounded border border-zinc-700 p-2 space-y-1.5 text-xs">
-                      <p className="text-zinc-300 leading-relaxed">{writingPrompt.prompt}</p>
-                      <div className="flex gap-3 text-zinc-500">
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Writing Prompt</p>
+                    <div className="rounded border border-[var(--border-color)] p-2 space-y-1.5 text-xs">
+                      <p className="text-[var(--text-secondary)] leading-relaxed">{writingPrompt.prompt}</p>
+                      <div className="flex gap-3 text-[var(--text-muted)]">
                         <span>{writingPrompt.word_limit}+ words</span>
                         <span>{writingPrompt.time_limit_mins} min</span>
                         {writingPrompt.chart_type && <span className="capitalize">{writingPrompt.chart_type}</span>}
                         {writingPrompt.letter_type && <span className="capitalize">{writingPrompt.letter_type} letter</span>}
                       </div>
-                      {writingPrompt.letter_situation && <p className="text-zinc-400">{writingPrompt.letter_situation}</p>}
+                      {writingPrompt.letter_situation && <p className="text-[var(--text-secondary)]">{writingPrompt.letter_situation}</p>}
                     </div>
                   </div>
                 )}
@@ -689,14 +689,14 @@ export default function QuestionsPage() {
                 {/* Cue card */}
                 {cueCard && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Cue Card</p>
-                    <div className="rounded border border-zinc-700 p-2 space-y-1.5 text-xs">
-                      <p className="text-zinc-300 font-medium">{cueCard.topic}</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Cue Card</p>
+                    <div className="rounded border border-[var(--border-color)] p-2 space-y-1.5 text-xs">
+                      <p className="text-[var(--text-secondary)] font-medium">{cueCard.topic}</p>
                       <ul className="space-y-0.5 pl-3">
-                        {cueCard.bullet_points.map((b, i) => <li key={i} className="text-zinc-400 list-disc">{b}</li>)}
+                        {cueCard.bullet_points.map((b, i) => <li key={i} className="text-[var(--text-secondary)] list-disc">{b}</li>)}
                       </ul>
-                      {cueCard.follow_up && <p className="text-zinc-400 italic">{cueCard.follow_up}</p>}
-                      <div className="flex gap-3 text-zinc-500">
+                      {cueCard.follow_up && <p className="text-[var(--text-secondary)] italic">{cueCard.follow_up}</p>}
+                      <div className="flex gap-3 text-[var(--text-muted)]">
                         <span>Prep: {cueCard.prep_time_seconds}s</span>
                         <span>Speak: {cueCard.speak_time_seconds}s</span>
                       </div>
@@ -707,10 +707,10 @@ export default function QuestionsPage() {
                 {/* Speaking questions */}
                 {speakingQuestions && speakingQuestions.length > 0 && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-zinc-500">Speaking Questions</p>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Speaking Questions</p>
                     <ol className="space-y-1 list-decimal list-inside">
                       {speakingQuestions.map((item, idx) => (
-                        <li key={idx} className="text-zinc-300 text-xs">{item.question}</li>
+                        <li key={idx} className="text-[var(--text-secondary)] text-xs">{item.question}</li>
                       ))}
                     </ol>
                   </div>
@@ -720,11 +720,11 @@ export default function QuestionsPage() {
                 {viewQ.tags?.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {viewQ.tags.map((t) => (
-                      <span key={t} className="rounded border border-zinc-700 px-1.5 py-0.5 text-xs text-zinc-500">{t}</span>
+                      <span key={t} className="rounded border border-[var(--border-color)] px-1.5 py-0.5 text-xs text-[var(--text-muted)]">{t}</span>
                     ))}
                   </div>
                 )}
-                <p className="text-xs text-zinc-600">ID: {viewQ.id}</p>
+                <p className="text-xs text-[var(--text-muted)]">ID: {viewQ.id}</p>
               </div>
             );
           })()}

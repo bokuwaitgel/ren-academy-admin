@@ -28,8 +28,8 @@ function StatCard({
           <Icon className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-zinc-100">{value}</p>
-          <p className="text-xs text-zinc-500">{label}</p>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{value}</p>
+          <p className="text-xs text-[var(--text-muted)]">{label}</p>
         </div>
       </CardContent>
     </Card>
@@ -56,7 +56,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--text-muted)]" />
       </div>
     );
   }
@@ -81,8 +81,8 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="text-xl font-bold text-zinc-100">Dashboard</h1>
-        <p className="mt-0.5 text-sm text-zinc-500">Overview of your IELTS platform</p>
+        <h1 className="text-xl font-bold text-[var(--text-primary)]">Dashboard</h1>
+        <p className="mt-0.5 text-sm text-[var(--text-muted)]">Overview of your IELTS platform</p>
       </div>
 
       {/* Stat cards */}
@@ -98,21 +98,21 @@ export default function DashboardPage() {
         {/* Active / Completed */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-[var(--text-secondary)] flex items-center gap-2">
               <Activity className="h-4 w-4" /> Session Activity
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-400">Active</span>
+              <span className="text-sm text-[var(--text-secondary)]">Active</span>
               <span className="text-lg font-bold text-amber-400">{fmt(stats?.active_sessions)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-400">Completed</span>
+              <span className="text-sm text-[var(--text-secondary)]">Completed</span>
               <span className="text-lg font-bold text-emerald-400">{fmt(stats?.completed_sessions)}</span>
             </div>
-            <div className="flex items-center justify-between border-t border-zinc-800 pt-3">
-              <span className="text-sm text-zinc-400">Avg Band</span>
+            <div className="flex items-center justify-between border-t border-[var(--border-color)] pt-3">
+              <span className="text-sm text-[var(--text-secondary)]">Avg Band</span>
               <span className="text-lg font-bold text-indigo-400">
                 {stats?.average_band != null ? stats.average_band.toFixed(1) : "—"}
               </span>
@@ -123,14 +123,14 @@ export default function DashboardPage() {
         {/* Users by role */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-[var(--text-secondary)] flex items-center gap-2">
               <Users className="h-4 w-4" /> Users by Role
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {Object.entries(stats?.users_by_role || {}).map(([role, count]) => (
               <div key={role} className="flex items-center justify-between">
-                <span className="text-sm capitalize text-zinc-400">{role}</span>
+                <span className="text-sm capitalize text-[var(--text-secondary)]">{role}</span>
                 <Badge variant={role === "admin" ? "indigo" : role === "examiner" ? "warning" : "secondary"}>
                   {count}
                 </Badge>
@@ -142,14 +142,14 @@ export default function DashboardPage() {
         {/* Sessions by status */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-[var(--text-secondary)] flex items-center gap-2">
               <TrendingUp className="h-4 w-4" /> Sessions by Status
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {Object.entries(stats?.sessions_by_status || {}).map(([s, count]) => (
               <div key={s} className="flex items-center justify-between">
-                <span className="text-sm capitalize text-zinc-400">{s.replace("_", " ")}</span>
+                <span className="text-sm capitalize text-[var(--text-secondary)]">{s.replace("_", " ")}</span>
                 <Badge variant={(statusColors[s] as "warning" | "indigo" | "success" | "secondary") || "secondary"}>
                   {count}
                 </Badge>
@@ -164,7 +164,7 @@ export default function DashboardPage() {
         {/* Questions by section */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-[var(--text-secondary)] flex items-center gap-2">
               <FileQuestion className="h-4 w-4" /> Questions by Section
             </CardTitle>
           </CardHeader>
@@ -174,12 +174,12 @@ export default function DashboardPage() {
               return (
                 <div key={section}>
                   <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className={`capitalize font-medium ${(sectionColors[section] || "text-zinc-400").split(" ")[1]}`}>
+                    <span className={`capitalize font-medium ${(sectionColors[section] || "text-[var(--text-secondary)]").split(" ")[1]}`}>
                       {section}
                     </span>
-                    <span className="text-zinc-500">{count} ({pct}%)</span>
+                    <span className="text-[var(--text-muted)]">{count} ({pct}%)</span>
                   </div>
-                  <div className="h-1.5 w-full rounded-full bg-zinc-800">
+                  <div className="h-1.5 w-full rounded-full bg-[var(--surface)]">
                     <div
                       className="h-1.5 rounded-full bg-indigo-500"
                       style={{ width: `${pct}%` }}
@@ -194,22 +194,22 @@ export default function DashboardPage() {
         {/* Popular tests */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-[var(--text-secondary)] flex items-center gap-2">
               <BookOpen className="h-4 w-4" /> Most Popular Tests
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {(tAnalytics?.most_popular_tests || []).slice(0, 6).map((t, i) => (
               <div key={t.test_id} className="flex items-center gap-3">
-                <span className="w-5 shrink-0 text-center text-xs font-bold text-zinc-600">
+                <span className="w-5 shrink-0 text-center text-xs font-bold text-[var(--text-muted)]">
                   {i + 1}
                 </span>
-                <span className="flex-1 truncate text-sm text-zinc-300">{t.title}</span>
+                <span className="flex-1 truncate text-sm text-[var(--text-secondary)]">{t.title}</span>
                 <Badge variant="secondary">{t.attempts}</Badge>
               </div>
             ))}
             {!tAnalytics?.most_popular_tests?.length && (
-              <p className="text-sm text-zinc-600">No data yet</p>
+              <p className="text-sm text-[var(--text-muted)]">No data yet</p>
             )}
           </CardContent>
         </Card>
@@ -220,19 +220,19 @@ export default function DashboardPage() {
         <Card>
           <CardContent className="p-5 text-center">
             <p className="text-3xl font-bold text-emerald-400">{fmt(tAnalytics?.published_tests)}</p>
-            <p className="mt-1 text-xs text-zinc-500">Published Tests</p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">Published Tests</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5 text-center">
-            <p className="text-3xl font-bold text-zinc-400">{fmt(tAnalytics?.draft_tests)}</p>
-            <p className="mt-1 text-xs text-zinc-500">Draft Tests</p>
+            <p className="text-3xl font-bold text-[var(--text-secondary)]">{fmt(tAnalytics?.draft_tests)}</p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">Draft Tests</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5 text-center">
             <p className="text-3xl font-bold text-indigo-400">{fmt(tAnalytics?.total_sessions)}</p>
-            <p className="mt-1 text-xs text-zinc-500">Total Attempts</p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">Total Attempts</p>
           </CardContent>
         </Card>
       </div>

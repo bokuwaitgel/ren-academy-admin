@@ -23,7 +23,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} antialiased`} suppressHydrationWarning>
         <Providers>{children}</Providers>
-        <Toaster position="top-right" toastOptions={{ className: "!bg-zinc-900 !border-zinc-800 !text-zinc-100" }} />
+        <Toaster position="top-right" toastOptions={{ className: "!bg-[var(--card-bg)] !border-[var(--border-color)] !text-[var(--text-primary)]" }} />
       </body>
     </html>
   );

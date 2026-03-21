@@ -60,7 +60,7 @@ function ModuleBadges({ t }: { t: Test }) {
       {t.listening && <span className="rounded border border-indigo-800 bg-indigo-950 px-1.5 py-0.5 text-[10px] font-medium text-indigo-300"><Headphones className="inline h-2.5 w-2.5 mr-0.5" />L</span>}
       {t.reading   && <span className="rounded border border-emerald-800 bg-emerald-950 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300"><BookOpen className="inline h-2.5 w-2.5 mr-0.5" />R</span>}
       {t.writing   && <span className="rounded border border-amber-800 bg-amber-950 px-1.5 py-0.5 text-[10px] font-medium text-amber-300"><PenLine className="inline h-2.5 w-2.5 mr-0.5" />W</span>}
-      {t.speaking  && <span className="rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-300"><Mic2 className="inline h-2.5 w-2.5 mr-0.5" />S</span>}
+      {t.speaking  && <span className="rounded border border-[var(--border-color)] bg-[var(--surface)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--text-secondary)]"><Mic2 className="inline h-2.5 w-2.5 mr-0.5" />S</span>}
     </div>
   );
 }
@@ -210,8 +210,8 @@ export default function TestsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-zinc-100">Tests</h1>
-          <p className="text-sm text-zinc-500">{data?.total ?? 0} total tests</p>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">Tests</h1>
+          <p className="text-sm text-[var(--text-muted)]">{data?.total ?? 0} total tests</p>
         </div>
         <Button onClick={() => setCreating(true)}>
           <Plus className="h-4 w-4" /> New Test
@@ -236,7 +236,7 @@ export default function TestsPage() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-600" />
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
             </div>
           ) : (
             <Table>
@@ -254,18 +254,18 @@ export default function TestsPage() {
               <TableBody>
                 {data?.items.map((t) => (
                   <TableRow key={t.id}>
-                    <TableCell className="font-medium text-zinc-200">{truncate(t.title)}</TableCell>
+                    <TableCell className="font-medium text-[var(--text-primary)]">{truncate(t.title)}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="capitalize">{t.module_type}</Badge>
                     </TableCell>
                     <TableCell><ModuleBadges t={t} /></TableCell>
-                    <TableCell className="text-zinc-400">{t.question_count}</TableCell>
+                    <TableCell className="text-[var(--text-secondary)]">{t.question_count}</TableCell>
                     <TableCell>
                       <Badge variant={t.is_published ? "success" : "secondary"}>
                         {t.is_published ? "Published" : "Draft"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-zinc-500 text-xs">
+                    <TableCell className="text-[var(--text-muted)] text-xs">
                       {new Date(t.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
@@ -302,7 +302,7 @@ export default function TestsPage() {
                 ))}
                 {!data?.items.length && (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-zinc-600">No tests found</TableCell>
+                    <TableCell colSpan={7} className="h-32 text-center text-[var(--text-muted)]">No tests found</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -313,7 +313,7 @@ export default function TestsPage() {
 
       {/* Pagination */}
       {data && data.total_pages > 1 && (
-        <div className="flex items-center justify-between text-sm text-zinc-500">
+        <div className="flex items-center justify-between text-sm text-[var(--text-muted)]">
           <span>Page {data.page} of {data.total_pages}</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
@@ -340,9 +340,9 @@ export default function TestsPage() {
                 </Badge>
                 <Badge variant="secondary" className="capitalize">{viewTest.module_type}</Badge>
                 <ModuleBadges t={viewTest} />
-                {viewQLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-500 self-center" />}
+                {viewQLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--text-muted)] self-center" />}
               </div>
-              {viewTest.description && <p className="text-zinc-400">{viewTest.description}</p>}
+              {viewTest.description && <p className="text-[var(--text-secondary)]">{viewTest.description}</p>}
 
               {/* Helper: renders question list for a set of IDs */}
               {(() => {
@@ -352,13 +352,13 @@ export default function TestsPage() {
                       const q = viewQMeta[id];
                       return (
                         <div key={id} className="flex items-center gap-2">
-                          <span className="h-1 w-1 rounded-full bg-zinc-600 shrink-0" />
+                          <span className="h-1 w-1 rounded-full bg-[var(--text-muted)] shrink-0" />
                           {q ? (
-                            <span className="text-zinc-300 truncate">{q.title}
-                              <span className="ml-1.5 text-zinc-600 text-[10px]">{q.type.replace(/_/g, " ")}</span>
+                            <span className="text-[var(--text-secondary)] truncate">{q.title}
+                              <span className="ml-1.5 text-[var(--text-muted)] text-[10px]">{q.type.replace(/_/g, " ")}</span>
                             </span>
                           ) : (
-                            <span className="text-zinc-600 italic">{id.slice(0, 10)}…</span>
+                            <span className="text-[var(--text-muted)] italic">{id.slice(0, 10)}…</span>
                           )}
                         </div>
                       );
@@ -377,9 +377,9 @@ export default function TestsPage() {
                             <div key={s.section_number} className="rounded-md border border-indigo-900 bg-indigo-950/20 px-3 py-2 text-xs">
                               <div className="flex justify-between items-center">
                                 <span className="font-medium text-indigo-200">Section {s.section_number}</span>
-                                <span className="text-zinc-500">{s.question_ids.length} questions</span>
+                                <span className="text-[var(--text-muted)]">{s.question_ids.length} questions</span>
                               </div>
-                              {s.audio_url && <p className="mt-0.5 text-zinc-500 truncate">{s.audio_url}</p>}
+                              {s.audio_url && <p className="mt-0.5 text-[var(--text-muted)] truncate">{s.audio_url}</p>}
                               {s.question_ids.length > 0 && <QList ids={s.question_ids} />}
                             </div>
                           ))}
@@ -396,9 +396,9 @@ export default function TestsPage() {
                             <div key={s.section_number} className="rounded-md border border-emerald-900 bg-emerald-950/20 px-3 py-2 text-xs">
                               <div className="flex justify-between items-center">
                                 <span className="font-medium text-emerald-200">Passage {s.section_number}</span>
-                                <span className="text-zinc-500">{s.question_ids.length} questions</span>
+                                <span className="text-[var(--text-muted)]">{s.question_ids.length} questions</span>
                               </div>
-                              {s.passage && <p className="mt-0.5 text-zinc-600 line-clamp-2">{s.passage}</p>}
+                              {s.passage && <p className="mt-0.5 text-[var(--text-muted)] line-clamp-2">{s.passage}</p>}
                               {s.question_ids.length > 0 && <QList ids={s.question_ids} />}
                             </div>
                           ))}
@@ -414,8 +414,8 @@ export default function TestsPage() {
                           {viewTest.writing.tasks.map((task) => (
                             <div key={task.task_number} className="rounded-md border border-amber-900 bg-amber-950/20 px-3 py-2 text-xs">
                               <p className="font-medium text-amber-200 mb-0.5">Task {task.task_number}</p>
-                              <p className="text-zinc-400 line-clamp-2">{task.description}</p>
-                              {task.image_url && <p className="mt-0.5 text-zinc-500 truncate">{task.image_url}</p>}
+                              <p className="text-[var(--text-secondary)] line-clamp-2">{task.description}</p>
+                              {task.image_url && <p className="mt-0.5 text-[var(--text-muted)] truncate">{task.image_url}</p>}
                             </div>
                           ))}
                         </div>
@@ -425,13 +425,13 @@ export default function TestsPage() {
                     {/* Speaking */}
                     {viewTest.speaking && (
                       <div>
-                        <p className="mb-1.5 text-xs font-semibold text-zinc-300 flex items-center gap-1.5"><Mic2 className="h-3.5 w-3.5" /> Speaking</p>
+                        <p className="mb-1.5 text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5"><Mic2 className="h-3.5 w-3.5" /> Speaking</p>
                         <div className="space-y-1.5">
                           {viewTest.speaking.parts.map((part) => (
-                            <div key={part.part_number} className="rounded-md border border-zinc-700 bg-zinc-800/40 px-3 py-2 text-xs">
+                            <div key={part.part_number} className="rounded-md border border-[var(--border-color)] bg-[var(--surface)] px-3 py-2 text-xs">
                               <div className="flex justify-between items-center">
-                                <span className="font-medium text-zinc-200">Part {part.part_number}</span>
-                                <span className="text-zinc-500">{part.question_ids.length} questions</span>
+                                <span className="font-medium text-[var(--text-primary)]">Part {part.part_number}</span>
+                                <span className="text-[var(--text-muted)]">{part.question_ids.length} questions</span>
                               </div>
                               {part.question_ids.length > 0 && <QList ids={part.question_ids} />}
                             </div>
@@ -443,7 +443,7 @@ export default function TestsPage() {
                 );
               })()}
 
-              <p className="text-xs text-zinc-600">ID: {viewTest.id}</p>
+              <p className="text-xs text-[var(--text-muted)]">ID: {viewTest.id}</p>
             </div>
           )}
         </DialogContent>
@@ -460,16 +460,16 @@ export default function TestsPage() {
               <div className="rounded border border-red-900 bg-red-950/50 p-3 text-sm text-red-400">{editErr}</div>
             )}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Title *</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Title *</label>
               <Input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} placeholder="IELTS Academic Test 1" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Description</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Description</label>
               <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-300">Module</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Module</label>
                 <Select value={editForm.module_type} onValueChange={v => setEditForm(f => ({ ...f, module_type: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -480,11 +480,11 @@ export default function TestsPage() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Modules</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Modules</label>
               <TestModulesEditor modules={editModules} onChange={setEditModules} testId={editTest?.id} moduleType={editForm.module_type} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Tags (comma-separated)</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Tags (comma-separated)</label>
               <Input value={editForm.tags} onChange={e => setEditForm(f => ({ ...f, tags: e.target.value }))} placeholder="ielts, academic, 2024" />
             </div>
             <div className="flex gap-2 pt-1">
@@ -508,16 +508,16 @@ export default function TestsPage() {
               <div className="rounded border border-red-900 bg-red-950/50 p-3 text-sm text-red-400">{createErr}</div>
             )}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Title *</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Title *</label>
               <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="IELTS Academic Test 1" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Description</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Description</label>
               <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-300">Module</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Module</label>
                 <Select value={form.module_type} onValueChange={v => setForm(f => ({ ...f, module_type: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -528,11 +528,11 @@ export default function TestsPage() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Modules</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Modules</label>
               <TestModulesEditor modules={createModules} onChange={setCreateModules} moduleType={form.module_type} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Tags (comma-separated)</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Tags (comma-separated)</label>
               <Input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="ielts, academic, 2024" />
             </div>
             <div className="flex gap-2 pt-1">

@@ -61,14 +61,14 @@ export default function UsersPage() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-zinc-100">Users</h1>
-        <p className="text-sm text-zinc-500">{data?.total ?? 0} total users</p>
+        <h1 className="text-xl font-bold text-[var(--text-primary)]">Users</h1>
+        <p className="text-sm text-[var(--text-muted)]">{data?.total ?? 0} total users</p>
       </div>
 
       {/* Filters */}
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
           <Input
             placeholder="Search username or email…"
             value={search}
@@ -94,7 +94,7 @@ export default function UsersPage() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-600" />
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
             </div>
           ) : (
             <Table>
@@ -112,8 +112,8 @@ export default function UsersPage() {
               <TableBody>
                 {data?.items.map((u) => (
                   <TableRow key={u.id}>
-                    <TableCell className="font-medium text-zinc-200">{u.username}</TableCell>
-                    <TableCell className="text-zinc-400 text-sm">{u.email}</TableCell>
+                    <TableCell className="font-medium text-[var(--text-primary)]">{u.username}</TableCell>
+                    <TableCell className="text-[var(--text-secondary)] text-sm">{u.email}</TableCell>
                     <TableCell>
                       <Badge
                         variant={u.role === "admin" ? "indigo" : u.role === "examiner" ? "warning" : "secondary"}
@@ -127,10 +127,10 @@ export default function UsersPage() {
                         {u.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-zinc-500 text-sm">
+                    <TableCell className="text-[var(--text-muted)] text-sm">
                       {u.total_sessions ?? "—"}
                     </TableCell>
-                    <TableCell className="text-zinc-500 text-xs">
+                    <TableCell className="text-[var(--text-muted)] text-xs">
                       {new Date(u.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
@@ -161,7 +161,7 @@ export default function UsersPage() {
                 ))}
                 {!data?.items.length && (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-zinc-600">No users found</TableCell>
+                    <TableCell colSpan={7} className="h-32 text-center text-[var(--text-muted)]">No users found</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -172,7 +172,7 @@ export default function UsersPage() {
 
       {/* Pagination */}
       {data && data.total_pages > 1 && (
-        <div className="flex items-center justify-between text-sm text-zinc-500">
+        <div className="flex items-center justify-between text-sm text-[var(--text-muted)]">
           <span>Page {data.page} of {data.total_pages}</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
@@ -194,11 +194,11 @@ export default function UsersPage() {
           {editUser && (
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-zinc-200">{editUser.username}</p>
-                <p className="text-xs text-zinc-500">{editUser.email}</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">{editUser.username}</p>
+                <p className="text-xs text-[var(--text-muted)]">{editUser.email}</p>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-300">Role</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Role</label>
                 <Select value={editRole} onValueChange={setEditRole}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>

@@ -58,7 +58,7 @@ const SECTION_COLORS: Record<string, string> = {
   listening: "bg-indigo-950/60 text-indigo-300 border-indigo-800",
   reading:   "bg-emerald-950/60 text-emerald-300 border-emerald-800",
   writing:   "bg-amber-950/60 text-amber-300 border-amber-800",
-  speaking:  "bg-zinc-800 text-zinc-300 border-zinc-700",
+  speaking:  "bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border-color)]",
 };
 
 const SECTION_PARTS: Record<string, { value: string; label: string }[]> = {
@@ -174,9 +174,9 @@ export default function QuestionPickerDialog({
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-xl flex flex-col p-0 gap-0 max-h-[85vh]">
-        <DialogHeader className="px-5 pt-5 pb-3 border-b border-zinc-800 flex-shrink-0">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-[var(--border-color)] flex-shrink-0">
           <DialogTitle>Add Questions</DialogTitle>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-[var(--text-muted)] mt-0.5">
             Questions are grouped into sections automatically by their type.
           </p>
         </DialogHeader>
@@ -185,7 +185,7 @@ export default function QuestionPickerDialog({
         <div className="flex flex-col gap-2 px-4 pt-3 pb-2 flex-shrink-0">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
               <Input
                 placeholder="Search by title…"
                 value={search}
@@ -213,8 +213,8 @@ export default function QuestionPickerDialog({
                 onClick={() => { setPartFilter("all"); setPage(1); }}
                 className={`rounded border px-2 py-0.5 text-[11px] font-medium transition-colors ${
                   partFilter === "all"
-                    ? "border-zinc-500 bg-zinc-700 text-zinc-200"
-                    : "border-zinc-700 bg-zinc-900 text-zinc-500 hover:text-zinc-300"
+                    ? "border-[var(--border-color)] bg-[var(--surface-secondary)] text-[var(--text-primary)]"
+                    : "border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                 }`}
               >
                 All parts
@@ -226,8 +226,8 @@ export default function QuestionPickerDialog({
                   onClick={() => { setPartFilter(p.value); setPage(1); }}
                   className={`rounded border px-2 py-0.5 text-[11px] font-medium transition-colors ${
                     partFilter === p.value
-                      ? `${SECTION_COLORS[sectionFilter] ?? "border-zinc-500 bg-zinc-700 text-zinc-200"}`
-                      : "border-zinc-700 bg-zinc-900 text-zinc-500 hover:text-zinc-300"
+                      ? `${SECTION_COLORS[sectionFilter] ?? "border-[var(--border-color)] bg-[var(--surface-secondary)] text-[var(--text-primary)]"}`
+                      : "border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                   }`}
                 >
                   {p.label}
@@ -257,7 +257,7 @@ export default function QuestionPickerDialog({
         <div className="flex-1 overflow-y-auto px-4 py-1 space-y-1 min-h-0">
           {loading ? (
             <div className="flex h-40 items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-zinc-600" />
+              <Loader2 className="h-5 w-5 animate-spin text-[var(--text-muted)]" />
             </div>
           ) : (
             <>
@@ -273,10 +273,10 @@ export default function QuestionPickerDialog({
                     onClick={() => toggle(q)}
                     className={`w-full text-left rounded-lg border px-3 py-2.5 transition-colors ${
                       alreadyIn
-                        ? "border-zinc-800 bg-zinc-800/20 opacity-40 cursor-not-allowed"
+                        ? "border-[var(--border-color)] bg-[var(--surface)] opacity-40 cursor-not-allowed"
                         : isChecked
                         ? "border-indigo-700 bg-indigo-950/40"
-                        : "border-zinc-800 bg-zinc-900 hover:border-zinc-700 hover:bg-zinc-800/60"
+                        : "border-[var(--border-color)] bg-[var(--card-bg)] hover:border-[var(--border-color)] hover:bg-[var(--surface)]"
                     }`}
                   >
                     <div className="flex items-start gap-2.5">
@@ -285,15 +285,15 @@ export default function QuestionPickerDialog({
                           isChecked
                             ? "border-indigo-500 bg-indigo-600"
                             : alreadyIn
-                            ? "border-zinc-600 bg-zinc-700"
-                            : "border-zinc-600"
+                            ? "border-[var(--border-color)] bg-[var(--surface-secondary)]"
+                            : "border-[var(--border-color)]"
                         }`}
                       >
                         {(isChecked || alreadyIn) && <Check className="h-3 w-3 text-white" />}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium truncate ${isChecked ? "text-zinc-100" : "text-zinc-300"}`}>
+                        <p className={`text-sm font-medium truncate ${isChecked ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"}`}>
                           {q.title}
                         </p>
                         <div className="flex flex-wrap gap-1.5 mt-1">
@@ -309,7 +309,7 @@ export default function QuestionPickerDialog({
                             {q.module_type}
                           </Badge>
                           {alreadyIn && (
-                            <span className="text-[10px] text-zinc-500 italic">already added</span>
+                            <span className="text-[10px] text-[var(--text-muted)] italic">already added</span>
                           )}
                         </div>
                       </div>
@@ -318,7 +318,7 @@ export default function QuestionPickerDialog({
                 );
               })}
               {!loading && !data?.items.length && (
-                <div className="flex h-40 items-center justify-center text-sm text-zinc-600">
+                <div className="flex h-40 items-center justify-center text-sm text-[var(--text-muted)]">
                   No questions found
                 </div>
               )}
@@ -327,7 +327,7 @@ export default function QuestionPickerDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-zinc-800 px-4 py-3 flex-shrink-0">
+        <div className="flex items-center justify-between border-t border-[var(--border-color)] px-4 py-3 flex-shrink-0">
           <div className="flex items-center gap-1.5">
             <Button
               variant="outline"
@@ -338,7 +338,7 @@ export default function QuestionPickerDialog({
             >
               ‹
             </Button>
-            <span className="text-xs text-zinc-500 w-16 text-center">
+            <span className="text-xs text-[var(--text-muted)] w-16 text-center">
               {data?.page ?? 1} / {data?.total_pages ?? 1}
             </span>
             <Button
@@ -353,7 +353,7 @@ export default function QuestionPickerDialog({
           </div>
           <div className="flex items-center gap-2">
             {picked.size > 0 && (
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-[var(--text-secondary)]">
                 {picked.size} selected
               </span>
             )}
