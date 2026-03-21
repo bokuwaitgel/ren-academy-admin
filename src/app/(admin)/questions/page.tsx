@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { questions as qApi, type Question, type Paginated } from "@/lib/api";
+import { toast } from "sonner";
+import { questions as qApi, showApiError, type Question, type Paginated } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import QuestionCreator from "@/components/question-creator";
 import { Plus, Search, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, Pencil, Headphones, BookOpen, PenTool, Mic } from "lucide-react";
 
@@ -97,6 +99,7 @@ export default function QuestionsPage() {
   const [editQ, setEditQ] = useState<Question | null>(null);
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Question | null>(null);
   const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
   const [groupByTypeEnabled, setGroupByTypeEnabled] = useState(false);
 
@@ -107,7 +110,7 @@ export default function QuestionsPage() {
       if (search) params.search = search;
       const res = await qApi.list(params);
       setData(res);
-    } catch (e) { console.error(e); }
+    } catch (e) { showApiError(e, "Failed to load questions"); }
     finally { setLoading(false); }
   }, [page, search, activeSection, activePart]);
 
@@ -132,17 +135,19 @@ export default function QuestionsPage() {
     try {
       const full = await qApi.get(q.id);
       setEditQ(full);
-    } catch (e) { console.error(e); }
+    } catch (e) { showApiError(e, "Failed to load question"); }
     finally { setLoadingEditId(null); }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this question?")) return;
-    setDeletingId(id);
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletingId(deleteTarget.id);
     try {
-      await qApi.delete(id);
+      await qApi.delete(deleteTarget.id);
+      toast.success("Question deleted");
+      setDeleteTarget(null);
       load();
-    } catch (e) { console.error(e); }
+    } catch (e) { showApiError(e, "Failed to delete question"); }
     finally { setDeletingId(null); }
   };
 
@@ -287,7 +292,7 @@ export default function QuestionsPage() {
                               </Button>
                               <Button variant="ghost" size="icon"
                                 className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
-                                onClick={() => handleDelete(q.id)} disabled={deletingId === q.id}>
+                                onClick={() => setDeleteTarget(q)} disabled={deletingId === q.id}>
                                 {deletingId === q.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                               </Button>
                             </div>
@@ -347,7 +352,7 @@ export default function QuestionsPage() {
                         <Button
                           variant="ghost" size="icon"
                           className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
-                          onClick={() => handleDelete(q.id)}
+                          onClick={() => setDeleteTarget(q)}
                           disabled={deletingId === q.id}
                         >
                           {deletingId === q.id
@@ -731,13 +736,25 @@ export default function QuestionsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirm Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Question"
+        description={`Are you sure you want to delete "${deleteTarget?.title ?? "this question"}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDelete}
+        loading={deletingId === deleteTarget?.id}
+      />
+
       {/* Creator modal — pre-seeded with current section + part */}
       {creatorOpen && (
         <QuestionCreator
           initialSection={activeSection}
           initialPart={activePart}
           onClose={() => setCreatorOpen(false)}
-          onCreated={() => { setCreatorOpen(false); load(); }}
+          onCreated={() => { setCreatorOpen(false); toast.success("Question created"); load(); }}
         />
       )}
 
@@ -746,8 +763,8 @@ export default function QuestionsPage() {
         <QuestionCreator
           initialData={editQ}
           onClose={() => setEditQ(null)}
-          onCreated={() => { setEditQ(null); load(); }}
-          onUpdated={() => { setEditQ(null); load(); }}
+          onCreated={() => { setEditQ(null); toast.success("Question created"); load(); }}
+          onUpdated={() => { setEditQ(null); toast.success("Question updated"); load(); }}
         />
       )}
     </div>

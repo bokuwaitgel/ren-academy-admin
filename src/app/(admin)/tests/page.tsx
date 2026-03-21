@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import {
-  tests as tApi, questions as qApi, type Test, type Paginated,
+  tests as tApi, questions as qApi, showApiError, type Test, type Paginated,
 } from "@/lib/api";
 import TestModulesEditor, { type TestModules } from "@/components/sections-editor";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Plus, Eye, Trash2, Globe, EyeOff, Loader2,
   ChevronLeft, ChevronRight, Pencil,
@@ -76,6 +78,7 @@ export default function TestsPage() {
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Test | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [createErr, setCreateErr] = useState("");
   const [editTest, setEditTest] = useState<Test | null>(null);
@@ -99,7 +102,7 @@ export default function TestsPage() {
       if (pubFilter === "published") params.published_only = true;
       const res = await tApi.list(params);
       setData(res);
-    } catch (e) { console.error(e); }
+    } catch (e) { showApiError(e, "Failed to load tests"); }
     finally { setLoading(false); }
   }, [page, pubFilter]);
 
@@ -138,6 +141,7 @@ export default function TestsPage() {
         ...(createModules.writing   ? { writing:   createModules.writing   } : {}),
         ...(createModules.speaking  ? { speaking:  createModules.speaking  } : {}),
       });
+      toast.success("Test created");
       setCreating(false);
       setForm({ title: "", description: "", module_type: "academic", tags: "" });
       setCreateModules(EMPTY_MODULES);
@@ -181,6 +185,7 @@ export default function TestsPage() {
         writing:   editModules.writing   ?? null,
         speaking:  editModules.speaking  ?? null,
       });
+      toast.success("Test updated");
       setEditTest(null);
       load();
     } catch (e: unknown) {
@@ -192,16 +197,21 @@ export default function TestsPage() {
     setToggling(t.id);
     try {
       await tApi.publish(t.id, !t.is_published);
+      toast.success(t.is_published ? "Test unpublished" : "Test published");
       load();
-    } catch (e) { console.error(e); }
+    } catch (e) { showApiError(e, "Failed to toggle publish"); }
     finally { setToggling(null); }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this test?")) return;
-    setDeletingId(id);
-    try { await tApi.delete(id); load(); }
-    catch (e) { console.error(e); }
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletingId(deleteTarget.id);
+    try {
+      await tApi.delete(deleteTarget.id);
+      toast.success("Test deleted");
+      setDeleteTarget(null);
+      load();
+    } catch (e) { showApiError(e, "Failed to delete test"); }
     finally { setDeletingId(null); }
   };
 
@@ -289,7 +299,7 @@ export default function TestsPage() {
                         <Button
                           variant="ghost" size="icon"
                           className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
-                          onClick={() => handleDelete(t.id)}
+                          onClick={() => setDeleteTarget(t)}
                           disabled={deletingId === t.id}
                         >
                           {deletingId === t.id
@@ -496,6 +506,18 @@ export default function TestsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirm Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Test"
+        description={`Are you sure you want to delete "${deleteTarget?.title ?? "this test"}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDelete}
+        loading={deletingId === deleteTarget?.id}
+      />
 
       {/* Create dialog */}
       <Dialog open={creating} onOpenChange={setCreating}>

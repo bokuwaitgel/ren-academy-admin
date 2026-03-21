@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { admin, type DashboardStats, type QuestionAnalytics, type TestAnalytics } from "@/lib/api";
+import { useEffect, useState, useCallback } from "react";
+import { admin, showApiError, type DashboardStats, type QuestionAnalytics, type TestAnalytics } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Users, FileQuestion, ClipboardList, GraduationCap,
-  Activity, TrendingUp, Loader2, BookOpen,
+  Activity, TrendingUp, Loader2, BookOpen, RefreshCw,
 } from "lucide-react";
 
 function fmt(n: number | undefined) {
@@ -41,22 +42,38 @@ export default function DashboardPage() {
   const [qAnalytics, setQAnalytics] = useState<QuestionAnalytics | null>(null);
   const [tAnalytics, setTAnalytics] = useState<TestAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setError(false);
     Promise.all([admin.dashboard(), admin.analytics.questions(), admin.analytics.tests()])
       .then(([s, q, t]) => {
         setStats(s);
         setQAnalytics(q);
         setTAnalytics(t);
       })
-      .catch(console.error)
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
 
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[var(--text-muted)]" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-4">
+        <p className="text-sm text-[var(--text-muted)]">Failed to load dashboard data</p>
+        <Button variant="outline" onClick={refresh}>
+          <RefreshCw className="mr-2 h-4 w-4" /> Retry
+        </Button>
       </div>
     );
   }
@@ -80,9 +97,14 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-xl font-bold text-[var(--text-primary)]">Dashboard</h1>
-        <p className="mt-0.5 text-sm text-[var(--text-muted)]">Overview of your IELTS platform</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">Dashboard</h1>
+          <p className="mt-0.5 text-sm text-[var(--text-muted)]">Overview of your IELTS platform</p>
+        </div>
+        <Button variant="outline" size="icon" onClick={refresh}>
+          <RefreshCw className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Stat cards */}

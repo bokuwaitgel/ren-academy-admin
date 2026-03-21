@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { admin, type Session, type Paginated, type SessionResult, type SessionSectionState, type SpeakingSectionDetails, type ListeningReadingDetails, type AnswerDetail } from "@/lib/api";
+import { toast } from "sonner";
+import { admin, showApiError, type Session, type Paginated, type SessionResult, type SessionSectionState, type SpeakingSectionDetails, type ListeningReadingDetails, type AnswerDetail } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -371,7 +372,7 @@ export default function SessionsPage() {
         res.items = res.items.filter(s => s.mode === modeFilter);
       }
       setData(res);
-    } catch (e) { console.error(e); }
+    } catch (e) { showApiError(e, "Failed to load sessions"); }
     finally { setLoading(false); }
   }, [page, statusFilter, modeFilter]);
 
@@ -400,6 +401,10 @@ export default function SessionsPage() {
         }
       }
       await admin.sessions.grade(gradeOpen.id, gradeSection, Number(gradeBand), details);
+      toast.success("Grade submitted successfully");
+      setGradeSection("writing");
+      setGradeBand("6.0");
+      setGradeDetails("");
       setGradeOpen(null);
       load();
     } catch (e: unknown) {
@@ -412,10 +417,11 @@ export default function SessionsPage() {
     setDeleting(true);
     try {
       await admin.sessions.delete(deleteTarget.id);
+      toast.success("Session deleted");
       setDeleteTarget(null);
       load();
     } catch (e: unknown) {
-      console.error(e);
+      showApiError(e, "Failed to delete session");
     } finally { setDeleting(false); }
   };
 

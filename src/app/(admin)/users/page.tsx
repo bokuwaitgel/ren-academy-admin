@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { admin, type User, type Paginated } from "@/lib/api";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { toast } from "sonner";
+import { admin, showApiError, type User, type Paginated } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Search, ChevronLeft, ChevronRight, UserCog, Ban } from "lucide-react";
 
@@ -24,6 +26,8 @@ export default function UsersPage() {
   const [editRole, setEditRole] = useState("");
   const [saving, setSaving] = useState(false);
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
+  const [deactivateTarget, setDeactivateTarget] = useState<UserRow | null>(null);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -32,7 +36,7 @@ export default function UsersPage() {
       if (roleFilter !== "all") params.role = roleFilter;
       if (search.trim()) params.search = search.trim();
       setData(await admin.users.list(params));
-    } catch (e) { console.error(e); }
+    } catch (e) { showApiError(e, "Failed to load users"); }
     finally { setLoading(false); }
   }, [page, search, roleFilter]);
 
@@ -43,18 +47,31 @@ export default function UsersPage() {
     setSaving(true);
     try {
       await admin.users.update(editUser.id, { role: editRole });
+      toast.success(`Role updated to ${editRole}`);
       setEditUser(null);
       load();
-    } catch (e) { console.error(e); }
+    } catch (e) { showApiError(e, "Failed to update role"); }
     finally { setSaving(false); }
   };
 
-  const handleDeactivate = async (id: string) => {
-    if (!confirm("Deactivate this user?")) return;
-    setDeactivatingId(id);
-    try { await admin.users.deactivate(id); load(); }
-    catch (e) { console.error(e); }
+  const handleDeactivate = async () => {
+    if (!deactivateTarget) return;
+    setDeactivatingId(deactivateTarget.id);
+    try {
+      await admin.users.deactivate(deactivateTarget.id);
+      toast.success("User deactivated");
+      setDeactivateTarget(null);
+      load();
+    } catch (e) { showApiError(e, "Failed to deactivate user"); }
     finally { setDeactivatingId(null); }
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
+      setPage(1);
+    }, 300);
   };
 
   return (
@@ -72,7 +89,7 @@ export default function UsersPage() {
           <Input
             placeholder="Search username or email…"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -147,7 +164,7 @@ export default function UsersPage() {
                             variant="ghost" size="icon"
                             className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
                             title="Deactivate"
-                            onClick={() => handleDeactivate(u.id)}
+                            onClick={() => setDeactivateTarget(u)}
                             disabled={deactivatingId === u.id}
                           >
                             {deactivatingId === u.id
@@ -184,6 +201,18 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+
+      {/* Deactivate Confirm Dialog */}
+      <ConfirmDialog
+        open={!!deactivateTarget}
+        onOpenChange={(open) => { if (!open) setDeactivateTarget(null); }}
+        title="Deactivate User"
+        description={`Are you sure you want to deactivate ${deactivateTarget?.username ?? "this user"}?`}
+        confirmLabel="Deactivate"
+        variant="destructive"
+        onConfirm={handleDeactivate}
+        loading={deactivatingId === deactivateTarget?.id}
+      />
 
       {/* Edit Role Dialog */}
       <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
