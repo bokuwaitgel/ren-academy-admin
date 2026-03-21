@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export interface ApiError {
@@ -10,6 +12,11 @@ function getToken(): string | null {
   return localStorage.getItem("access_token");
 }
 
+function getRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("refresh_token");
+}
+
 export function setTokens(access: string, refresh: string) {
   localStorage.setItem("access_token", access);
   localStorage.setItem("refresh_token", refresh);
@@ -20,27 +27,66 @@ export function clearTokens() {
   localStorage.removeItem("refresh_token");
 }
 
+let isRefreshing = false;
+
 async function request<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  skipAuth = false
 ): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-  if (token) {
+  if (token && !skipAuth) {
     headers["Authorization"] = `Bearer ${token}`;
   }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
 
   let res: Response;
   try {
     res = await fetch(`${API_BASE}${path}`, {
       ...options,
       headers,
+      signal: controller.signal,
     });
-  } catch {
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw { detail: "Request timed out after 30 seconds", status: 0 } as ApiError;
+    }
     throw { detail: `Network error — could not reach ${API_BASE}`, status: 0 } as ApiError;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  // 401 interceptor — attempt token refresh
+  if (res.status === 401 && !skipAuth && !isRefreshing) {
+    const refresh = getRefreshToken();
+    if (refresh) {
+      isRefreshing = true;
+      try {
+        const refreshRes = await request<LoginResponse>(
+          "/api/auth/refresh",
+          { method: "POST", body: JSON.stringify({ refresh_token: refresh }) },
+          true
+        );
+        setTokens(refreshRes.access_token, refreshRes.refresh_token);
+        isRefreshing = false;
+        // Retry original request with new token
+        return request<T>(path, options, false);
+      } catch {
+        isRefreshing = false;
+        clearTokens();
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+        throw { detail: "Session expired. Please log in again.", status: 401 } as ApiError;
+      }
+    }
   }
 
   if (!res.ok) {
@@ -69,7 +115,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  role: "candidate" | "examiner" | "admin" | "super_admin" | "super-admin";
+  role: "candidate" | "examiner" | "admin" | "super_admin";
   is_active: boolean;
   created_at: string;
 }
@@ -85,6 +131,10 @@ export const auth = {
     request<LoginResponse>("/api/auth/refresh", {
       method: "POST",
       body: JSON.stringify({ refresh_token }),
+    }),
+  logout: () =>
+    request<{ status: string }>("/api/auth/logout", {
+      method: "POST",
     }),
 };
 
@@ -202,7 +252,7 @@ export interface Test {
 export const tests = {
   list: (params: Record<string, string | number | boolean>) =>
     request<Paginated<Test>>(
-      `/api/tests/list?${new URLSearchParams(
+      `/api/tests/lists?${new URLSearchParams(
         Object.entries(params).map(([k, v]) => [k, String(v)])
       )}`
     ),
@@ -537,3 +587,16 @@ export const storage = {
       }),
     }),
 };
+
+// ── Error helper ─────────────────────────────
+
+export function showApiError(e: unknown, fallback = "Operation failed") {
+  const err = e as ApiError | undefined;
+  const msg =
+    err?.detail
+      ? typeof err.detail === "string"
+        ? err.detail
+        : JSON.stringify(err.detail)
+      : fallback;
+  toast.error(msg);
+}
