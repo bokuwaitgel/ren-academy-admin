@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import QuestionCreator from "@/components/question-creator";
-import { Plus, Search, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, Pencil, Headphones, BookOpen, PenTool, Mic } from "lucide-react";
+import { Plus, Search, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, Pencil, Headphones, BookOpen, PenTool, Mic, FileQuestion } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const SECTIONS = [
   { value: "listening", label: "Listening", icon: Headphones, color: "text-indigo-400 border-indigo-700 bg-indigo-950/30 hover:bg-indigo-950/50", activeColor: "border-indigo-500 bg-indigo-950/60 text-indigo-300" },
@@ -247,7 +248,7 @@ export default function QuestionsPage() {
 
       {/* Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
@@ -286,12 +287,13 @@ export default function QuestionsPage() {
                           <TableCell className="text-[var(--text-muted)] text-xs">{new Date(q.created_at).toLocaleDateString()}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => setViewQ(q)}><Eye className="h-4 w-4" /></Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleEdit(q)} disabled={loadingEditId === q.id}>
+                              <Button variant="ghost" size="icon" aria-label="View question" onClick={() => setViewQ(q)}><Eye className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" aria-label="Edit question" onClick={() => handleEdit(q)} disabled={loadingEditId === q.id}>
                                 {loadingEditId === q.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
                               </Button>
                               <Button variant="ghost" size="icon"
                                 className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
+                                aria-label="Delete question"
                                 onClick={() => setDeleteTarget(q)} disabled={deletingId === q.id}>
                                 {deletingId === q.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                               </Button>
@@ -346,12 +348,13 @@ export default function QuestionsPage() {
                         <Button variant="ghost" size="icon" onClick={() => setViewQ(q)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(q)} disabled={loadingEditId === q.id}>
+                        <Button variant="ghost" size="icon" aria-label="Edit question" onClick={() => handleEdit(q)} disabled={loadingEditId === q.id}>
                           {loadingEditId === q.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
                         </Button>
                         <Button
                           variant="ghost" size="icon"
                           className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
+                          aria-label="Delete question"
                           onClick={() => setDeleteTarget(q)}
                           disabled={deletingId === q.id}
                         >
@@ -365,8 +368,12 @@ export default function QuestionsPage() {
                 ))}
                 {!data?.items.length && (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-[var(--text-muted)]">
-                      No questions in {sectionInfo.label} — {activePartLabel}
+                    <TableCell colSpan={5}>
+                      <EmptyState
+                        icon={FileQuestion}
+                        title={`No questions in ${sectionInfo.label} — ${activePartLabel}`}
+                        description="Try adjusting your search or filters"
+                      />
                     </TableCell>
                   </TableRow>
                 )}

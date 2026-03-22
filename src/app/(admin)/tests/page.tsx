@@ -16,9 +16,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Plus, Eye, Trash2, Globe, EyeOff, Loader2,
-  ChevronLeft, ChevronRight, Pencil,
+  ChevronLeft, ChevronRight, Pencil, ClipboardList,
   Headphones, BookOpen, PenLine, Mic2,
 } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 function truncate(s: string, n = 50) { return s.length > n ? s.slice(0, n) + "…" : s; }
 
@@ -243,7 +244,7 @@ export default function TestsPage() {
 
       {/* Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
@@ -280,14 +281,15 @@ export default function TestsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(t)}>
+                        <Button variant="ghost" size="icon" aria-label="Edit test" onClick={() => openEdit(t)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setViewTest(t)}>
+                        <Button variant="ghost" size="icon" aria-label="View test" onClick={() => setViewTest(t)}>
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost" size="icon"
+                          aria-label="Toggle publish"
                           className={t.is_published ? "text-amber-400 hover:bg-amber-950/30" : "text-emerald-400 hover:bg-emerald-950/30"}
                           onClick={() => handleTogglePublish(t)}
                           disabled={toggling === t.id}
@@ -298,6 +300,7 @@ export default function TestsPage() {
                         </Button>
                         <Button
                           variant="ghost" size="icon"
+                          aria-label="Delete test"
                           className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
                           onClick={() => setDeleteTarget(t)}
                           disabled={deletingId === t.id}
@@ -312,7 +315,13 @@ export default function TestsPage() {
                 ))}
                 {!data?.items.length && (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-[var(--text-muted)]">No tests found</TableCell>
+                    <TableCell colSpan={7}>
+                      <EmptyState
+                        icon={ClipboardList}
+                        title="No tests found"
+                        description="Try adjusting your search or filters"
+                      />
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>

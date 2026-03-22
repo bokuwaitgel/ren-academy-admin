@@ -12,8 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
-  Eye, Star, Loader2, ChevronLeft, ChevronRight, CheckCircle2, Clock, Circle, ChevronDown, ChevronUp, Trash2,
+  Eye, Star, Loader2, ChevronLeft, ChevronRight, CheckCircle2, Clock, Circle, ChevronDown, ChevronUp, Trash2, GraduationCap,
 } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // ── Section progress helpers ──────────────────────────────────
 
@@ -464,7 +465,7 @@ export default function SessionsPage() {
 
       {/* Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
@@ -505,12 +506,13 @@ export default function SessionsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => setViewSession(s)}>
+                        <Button variant="ghost" size="icon" aria-label="View session" onClick={() => setViewSession(s)}>
                           <Eye className="h-4 w-4" />
                         </Button>
                         {(s.status === "submitted" || s.status === "graded") && (
                           <Button
                             variant="ghost" size="icon"
+                            aria-label="View results"
                             className="text-indigo-400 hover:bg-indigo-950/30"
                             onClick={() => openResult(s)}
                           >
@@ -520,6 +522,7 @@ export default function SessionsPage() {
                         {(s.status === "submitted" || s.status === "graded") && (
                           <Button
                             variant="ghost" size="icon"
+                            aria-label="Grade session"
                             className="text-amber-400 hover:bg-amber-950/30"
                             onClick={() => { setGradeOpen(s); setGradeErr(""); }}
                           >
@@ -529,6 +532,7 @@ export default function SessionsPage() {
                         {isSuperAdmin && (
                           <Button
                             variant="ghost" size="icon"
+                            aria-label="Delete session"
                             className="text-red-500 hover:bg-red-950/30"
                             onClick={() => setDeleteTarget(s)}
                           >
@@ -541,8 +545,12 @@ export default function SessionsPage() {
                 ))}
                 {!data?.items.length && (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-[var(--text-muted)]">
-                      No sessions found
+                    <TableCell colSpan={7}>
+                      <EmptyState
+                        icon={GraduationCap}
+                        title="No sessions found"
+                        description="Try adjusting your search or filters"
+                      />
                     </TableCell>
                   </TableRow>
                 )}

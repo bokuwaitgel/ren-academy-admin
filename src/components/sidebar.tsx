@@ -18,11 +18,11 @@ import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "next-themes";
 
 const NAV_ITEMS = [
-  { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
-  { href: "/users",      label: "Users",       icon: Users },
-  { href: "/questions",  label: "Questions",   icon: FileQuestion },
-  { href: "/tests",      label: "Tests",       icon: ClipboardList },
-  { href: "/sessions",   label: "Sessions",    icon: GraduationCap },
+  { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard, roles: ["admin", "super_admin"] },
+  { href: "/users",      label: "Users",       icon: Users,           roles: ["admin", "super_admin"] },
+  { href: "/questions",  label: "Questions",   icon: FileQuestion,    roles: ["admin", "super_admin", "examiner"] },
+  { href: "/tests",      label: "Tests",       icon: ClipboardList,   roles: ["admin", "super_admin"] },
+  { href: "/sessions",   label: "Sessions",    icon: GraduationCap,   roles: ["admin", "super_admin", "examiner"] },
 ];
 
 export function Sidebar() {
@@ -44,7 +44,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5 px-3 py-4">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {NAV_ITEMS.filter(item => !user || item.roles.includes(user.role)).map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link

@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Search, ChevronLeft, ChevronRight, UserCog, Ban } from "lucide-react";
+import { Loader2, Search, ChevronLeft, ChevronRight, UserCog, Ban, Users } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type UserRow = User & { total_sessions?: number };
 
@@ -108,7 +109,7 @@ export default function UsersPage() {
 
       {/* Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
               <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
@@ -155,6 +156,7 @@ export default function UsersPage() {
                         <Button
                           variant="ghost" size="icon"
                           title="Edit role"
+                          aria-label="Edit role"
                           onClick={() => { setEditUser(u); setEditRole(u.role); }}
                         >
                           <UserCog className="h-4 w-4" />
@@ -164,6 +166,7 @@ export default function UsersPage() {
                             variant="ghost" size="icon"
                             className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
                             title="Deactivate"
+                            aria-label="Deactivate user"
                             onClick={() => setDeactivateTarget(u)}
                             disabled={deactivatingId === u.id}
                           >
@@ -178,7 +181,13 @@ export default function UsersPage() {
                 ))}
                 {!data?.items.length && (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-[var(--text-muted)]">No users found</TableCell>
+                    <TableCell colSpan={7}>
+                      <EmptyState
+                        icon={Users}
+                        title="No users found"
+                        description="Try adjusting your search or filters"
+                      />
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
