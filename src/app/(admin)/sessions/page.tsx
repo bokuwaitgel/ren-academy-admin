@@ -181,7 +181,7 @@ function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
                         <p className="text-[var(--text-muted)] mb-1">Sample improvements:</p>
                         <ul className="space-y-0.5">
                           {ev.sample_improvements.map((s, j) => (
-                            <li key={j} className="text-[var(--text-secondary)] pl-2 border-l border-indigo-800">"{s}"</li>
+                            <li key={j} className="text-[var(--text-secondary)] pl-2 border-l border-indigo-800">&ldquo;{s}&rdquo;</li>
                           ))}
                         </ul>
                       </div>

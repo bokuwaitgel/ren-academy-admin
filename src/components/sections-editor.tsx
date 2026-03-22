@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, X, Headphones, BookOpen, PenLine, Mic2, Loader2, Upload, ChevronDown } from "lucide-react";
+import { Plus, Trash2, X, Headphones, BookOpen, PenLine, Mic2, Loader2, Upload } from "lucide-react";
 import QuestionPickerDialog, { type QuestionMeta } from "@/components/question-picker-dialog";
 import { questions as qApi, storage } from "@/lib/api";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { admin, showApiError, type DashboardStats, type QuestionAnalytics, type TestAnalytics } from "@/lib/api";
+import { admin, type DashboardStats, type QuestionAnalytics, type TestAnalytics } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,16 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    Promise.all([admin.dashboard(), admin.analytics.questions(), admin.analytics.tests()])
+      .then(([s, q, t]) => {
+        setStats(s);
+        setQAnalytics(q);
+        setTAnalytics(t);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
 
   if (loading) {
     return (
