@@ -18,11 +18,11 @@ import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "next-themes";
 
 const NAV_ITEMS = [
-  { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard, roles: ["admin", "super_admin"] },
-  { href: "/users",      label: "Users",       icon: Users,           roles: ["admin", "super_admin"] },
-  { href: "/questions",  label: "Questions",   icon: FileQuestion,    roles: ["admin", "super_admin", "examiner"] },
-  { href: "/tests",      label: "Tests",       icon: ClipboardList,   roles: ["admin", "super_admin"] },
-  { href: "/sessions",   label: "Sessions",    icon: GraduationCap,   roles: ["admin", "super_admin", "examiner"] },
+  { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard, roles: ["admin", "super_admin", "super-admin"] },
+  { href: "/users",      label: "Users",       icon: Users,           roles: ["admin", "super_admin", "super-admin"] },
+  { href: "/questions",  label: "Questions",   icon: FileQuestion,    roles: ["admin", "super_admin", "super-admin", "examiner"] },
+  { href: "/tests",      label: "Tests",       icon: ClipboardList,   roles: ["admin", "super_admin", "super-admin"] },
+  { href: "/sessions",   label: "Sessions",    icon: GraduationCap,   roles: ["admin", "super_admin", "super-admin", "examiner"] },
 ];
 
 export function Sidebar() {

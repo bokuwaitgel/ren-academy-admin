@@ -1,0 +1,26 @@
+services:
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    image: ren-academy-admin:latest
+    container_name: ren-admin
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      HOSTNAME: 0.0.0.0
+    mem_limit: 1536m
+    mem_reservation: 768m
+    deploy:
+      resources:
+        limits:
+          memory: 1536m
+        reservations:
+          memory: 768m

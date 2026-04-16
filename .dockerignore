@@ -1,0 +1,33 @@
+# VCS
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local
+coverage/
+.env.local
+.env.*.local
+README.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore

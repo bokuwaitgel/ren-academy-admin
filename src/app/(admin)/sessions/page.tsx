@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { admin, showApiError, type Session, type Paginated, type SessionResult, type SessionSectionState, type SpeakingSectionDetails, type ListeningReadingDetails, type AnswerDetail } from "@/lib/api";
+import { admin, showApiError, type Session, type Paginated, type SessionResult, type SessionSectionState, type SpeakingSectionDetails, type ListeningReadingDetails, type AnswerDetail, type WritingSectionDetails, type WritingEvaluation } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -202,30 +202,99 @@ function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
 
 // ── Listening / Reading answer detail list ────────────────────
 
+function isRecordLike(val: unknown): val is Record<string, unknown> {
+  return typeof val === "object" && val !== null && !Array.isArray(val);
+}
+
 function formatAnswer(val: unknown): string {
-  if (val == null) return "—";
+  if (val == null || val === "") return "—";
+  if (Array.isArray(val)) return val.map(v => (v == null ? "—" : String(v))).join(", ");
   if (typeof val === "object") return JSON.stringify(val);
   return String(val);
+}
+
+function answersMatch(a: unknown, b: unknown): boolean {
+  if (a == null || b == null) return false;
+  return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+}
+
+function SubAnswerTable({ user, correct }: { user: unknown; correct: unknown }) {
+  const userObj = isRecordLike(user) ? user : {};
+  const correctObj = isRecordLike(correct) ? correct : {};
+  const keys = Array.from(new Set([...Object.keys(userObj), ...Object.keys(correctObj)]))
+    .sort((a, b) => {
+      const na = Number(a), nb = Number(b);
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+
+  if (!keys.length) return null;
+
+  return (
+    <div className="mt-2 overflow-hidden rounded border border-[var(--border-color)] bg-[var(--card-bg)]/60">
+      <div className="grid grid-cols-[32px_1fr_1fr_20px] items-center gap-2 px-2 py-1 text-[10px] uppercase tracking-wide text-[var(--text-muted)] border-b border-[var(--border-color)]">
+        <span>#</span>
+        <span>Your answer</span>
+        <span>Correct</span>
+        <span />
+      </div>
+      {keys.map(k => {
+        const u = userObj[k];
+        const c = correctObj[k];
+        const match = answersMatch(u, c);
+        const idx = Number(k);
+        return (
+          <div
+            key={k}
+            className="grid grid-cols-[32px_1fr_1fr_20px] items-center gap-2 px-2 py-1 text-[11px] border-t border-[var(--border-color)]/40 first:border-t-0"
+          >
+            <span className="font-mono text-[var(--text-muted)]">
+              {Number.isNaN(idx) ? k : idx + 1}
+            </span>
+            <span
+              className={
+                u == null || u === ""
+                  ? "text-[var(--text-muted)] italic"
+                  : match
+                    ? "text-emerald-300"
+                    : "text-red-300"
+              }
+            >
+              {formatAnswer(u)}
+            </span>
+            <span className="text-[var(--text-secondary)]">{formatAnswer(c)}</span>
+            <span className="justify-self-end">
+              {match
+                ? <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                : <Circle className="h-3 w-3 text-red-400/70" />}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function AnswerDetailList({ details }: { details: ListeningReadingDetails }) {
   const items: AnswerDetail[] = details.answer_details ?? [];
   if (!items.length) return <p className="text-xs text-[var(--text-muted)] pt-2">No answer data.</p>;
 
-  const correct = items.filter(a => a.earned > 0 && a.max > 0).length;
-  const total = items.filter(a => a.max > 0).length;
+  // Sum points so multi-part questions contribute their full weight (e.g. 10-part item counts as /10, not /1).
+  const earnedSum = items.reduce((acc, a) => acc + (a.earned || 0), 0);
+  const maxSum = items.reduce((acc, a) => acc + (a.max || 0), 0);
 
   return (
     <div className="mt-2 space-y-1.5">
       <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] pb-1">
         <span>
-          <span className="font-bold text-emerald-400">{correct}</span>/{total} correct
+          <span className="font-bold text-emerald-400">{earnedSum}</span>/{maxSum} correct
         </span>
       </div>
       {items.map((a, i) => {
         const isCorrect = a.max > 0 && a.earned === a.max;
         const isPartial = a.max > 0 && a.earned > 0 && a.earned < a.max;
         const isWrong = a.max > 0 && a.earned === 0;
+        const isMultiPart = isRecordLike(a.user_answer) || isRecordLike(a.correct_answer);
         return (
           <div
             key={a.question_id ?? i}
@@ -246,18 +315,177 @@ function AnswerDetailList({ details }: { details: ListeningReadingDetails }) {
                 {(isWrong || isPartial) && <Circle className="h-3.5 w-3.5 text-red-400" />}
               </div>
             </div>
-            <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
-              <div>
-                <span className="text-[var(--text-muted)]">Your answer: </span>
-                <span className={isCorrect ? "text-emerald-300" : "text-red-300"}>{formatAnswer(a.user_answer)}</span>
-              </div>
-              {!isCorrect && (
+            {isMultiPart ? (
+              <SubAnswerTable user={a.user_answer} correct={a.correct_answer} />
+            ) : (
+              <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
                 <div>
-                  <span className="text-[var(--text-muted)]">Correct: </span>
-                  <span className="text-[var(--text-secondary)]">{formatAnswer(a.correct_answer)}</span>
+                  <span className="text-[var(--text-muted)]">Your answer: </span>
+                  <span className={isCorrect ? "text-emerald-300" : "text-red-300"}>{formatAnswer(a.user_answer)}</span>
                 </div>
-              )}
-            </div>
+                {!isCorrect && (
+                  <div>
+                    <span className="text-[var(--text-muted)]">Correct: </span>
+                    <span className="text-[var(--text-secondary)]">{formatAnswer(a.correct_answer)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Writing details panel ─────────────────────────────────────
+
+const WRITING_CRITERIA_LABELS: Record<string, string> = {
+  task_achievement: "Task Achievement",
+  coherence_cohesion: "Coherence & Cohesion",
+  lexical_resource: "Lexical Resource",
+  grammar_accuracy: "Grammar & Accuracy",
+};
+
+function wordCount(text: string): number {
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).length;
+}
+
+function WritingDetails({
+  session,
+  details,
+}: {
+  session: Session;
+  details: WritingSectionDetails | null;
+}) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const writingAnswers = (session.answers?.writing ?? {}) as Record<string, unknown>;
+  const evals = details?.ai_evaluations ?? {};
+
+  const keys = Array.from(
+    new Set([...Object.keys(writingAnswers), ...Object.keys(evals)])
+  ).sort((a, b) => a.localeCompare(b));
+
+  if (!keys.length) {
+    return (
+      <p className="mt-2 text-xs text-[var(--text-muted)]">
+        No writing submissions found.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      {keys.map((key) => {
+        const essay = typeof writingAnswers[key] === "string" ? (writingAnswers[key] as string) : "";
+        const ev: WritingEvaluation | undefined = evals[key];
+        const isOpen = expanded === key;
+        const taskLabel = key.replace(/^task_/i, "Task ");
+        const wc = wordCount(essay);
+        return (
+          <div key={key} className="rounded-lg border border-[var(--border-color)] bg-[var(--surface)]">
+            <button
+              className="w-full flex items-center justify-between px-3 py-2 text-left"
+              onClick={() => setExpanded(isOpen ? null : key)}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xs font-semibold text-[var(--text-secondary)] shrink-0">{taskLabel}</span>
+                <span className="text-xs text-[var(--text-muted)]">{wc} words</span>
+                {!essay && <span className="text-xs text-red-400">no submission</span>}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {ev && <span className="text-sm font-bold text-indigo-400">{ev.overall_score}</span>}
+                {isOpen ? <ChevronUp className="h-3 w-3 text-[var(--text-muted)]" /> : <ChevronDown className="h-3 w-3 text-[var(--text-muted)]" />}
+              </div>
+            </button>
+
+            {isOpen && (
+              <div className="border-t border-[var(--border-color)] px-3 pb-3 pt-2 space-y-3 text-xs">
+                {/* Essay text */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-1">Submission</p>
+                  {essay ? (
+                    <pre className="whitespace-pre-wrap break-words rounded border border-[var(--border-color)] bg-[var(--card-bg)] p-2.5 text-[12px] leading-relaxed text-[var(--text-secondary)] font-sans max-h-72 overflow-y-auto">
+                      {essay}
+                    </pre>
+                  ) : (
+                    <p className="text-[var(--text-muted)] italic">No essay submitted.</p>
+                  )}
+                </div>
+
+                {/* AI evaluation */}
+                {ev && (
+                  <>
+                    <div className="rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)]/60 p-2.5 space-y-2">
+                      <p className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase tracking-wide">Criteria Breakdown</p>
+                      {Object.entries(WRITING_CRITERIA_LABELS).map(([k, label]) => (
+                        <div key={k} className="grid grid-cols-[140px_1fr] items-center gap-2">
+                          <span className="text-[var(--text-secondary)]">{label}</span>
+                          <BandBar score={(ev[k as keyof typeof ev] as number) ?? null} />
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {ev.writing_level && <Badge variant="secondary">{ev.writing_level}</Badge>}
+                      {ev.ai_detection && (
+                        <Badge variant={ev.ai_detection === "Human Written" ? "success" : "warning"}>
+                          {ev.ai_detection}
+                          {typeof ev.ai_generation_percentage === "number" ? ` (${ev.ai_generation_percentage}%)` : ""}
+                        </Badge>
+                      )}
+                      <span className="text-[var(--text-muted)]">
+                        {ev.grammar_errors} grammar · {ev.vocabulary_errors} vocab · {ev.sentence_errors} sentence
+                      </span>
+                    </div>
+
+                    {ev.overall_feedback && (
+                      <p className="leading-relaxed text-[var(--text-secondary)]">{ev.overall_feedback}</p>
+                    )}
+                    {ev.ai_suggestions && (
+                      <div>
+                        <span className="text-amber-500 font-medium">Suggestions: </span>
+                        <span className="text-[var(--text-secondary)]">{ev.ai_suggestions}</span>
+                      </div>
+                    )}
+                    {ev.sentence_corrections && ev.sentence_corrections.length > 0 && (
+                      <div>
+                        <p className="text-[var(--text-muted)] mb-1">Sentence corrections:</p>
+                        <ul className="space-y-1">
+                          {ev.sentence_corrections.map((sc, j) => (
+                            <li key={j} className="pl-2 border-l border-indigo-800 space-y-0.5">
+                              <p className="text-red-300">{sc.original}</p>
+                              <p className="text-emerald-300">{sc.corrected}</p>
+                              <p className="text-[var(--text-muted)] italic">{sc.explanation}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {ev.improved_version && (
+                      <details className="text-[var(--text-secondary)]">
+                        <summary className="cursor-pointer text-[var(--text-muted)]">Improved version</summary>
+                        <pre className="mt-1 whitespace-pre-wrap break-words rounded border border-[var(--border-color)] bg-[var(--card-bg)] p-2.5 text-[12px] leading-relaxed font-sans">
+                          {ev.improved_version}
+                        </pre>
+                      </details>
+                    )}
+                    {ev.motivation && (
+                      <p className="italic text-indigo-400">{ev.motivation}</p>
+                    )}
+                  </>
+                )}
+
+                {!ev && essay && (
+                  <p className="text-[var(--text-muted)] italic">
+                    No AI evaluation yet — submit AI grading or grade manually.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         );
       })}
@@ -288,7 +516,18 @@ function SectionDetailList({ session }: { session: Session }) {
             (sec.section === "listening" || sec.section === "reading") && score?.details && "answer_details" in score.details
               ? (score.details as unknown as ListeningReadingDetails)
               : null;
-          const hasDetails = !!speakingDetails || !!lrDetails || (score && score.raw_score != null);
+          const writingDetails =
+            sec.section === "writing"
+              ? ((score?.details as unknown as WritingSectionDetails | undefined) ?? null)
+              : null;
+          const hasWritingAnswers =
+            sec.section === "writing" &&
+            !!(session.answers?.writing && Object.keys(session.answers.writing as Record<string, unknown>).length);
+          const hasDetails =
+            !!speakingDetails ||
+            !!lrDetails ||
+            (sec.section === "writing" && (!!writingDetails || hasWritingAnswers)) ||
+            (score && score.raw_score != null);
 
           return (
             <div key={sec.section} className="rounded-lg border border-[var(--border-color)] bg-[var(--surface)] overflow-hidden">
@@ -317,6 +556,8 @@ function SectionDetailList({ session }: { session: Session }) {
                     <SpeakingDetails details={speakingDetails} />
                   ) : lrDetails ? (
                     <AnswerDetailList details={lrDetails} />
+                  ) : sec.section === "writing" ? (
+                    <WritingDetails session={session} details={writingDetails} />
                   ) : score ? (
                     <div className="pt-2 text-xs text-[var(--text-secondary)]">
                       <div className="flex gap-4">
@@ -360,7 +601,7 @@ export default function SessionsPage() {
   const [deleting, setDeleting] = useState(false);
 
 
-  const isSuperAdmin = currentUser?.role === "super_admin";
+  const isSuperAdmin = currentUser?.role === "super_admin" || currentUser?.role === "super-admin";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -577,7 +818,7 @@ export default function SessionsPage() {
 
       {/* Session detail dialog */}
       <Dialog open={!!viewSession} onOpenChange={() => setViewSession(null)}>
-        <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="!max-w-[min(1100px,92vw)] w-[min(1100px,92vw)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Session Detail</DialogTitle>
           </DialogHeader>

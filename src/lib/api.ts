@@ -115,7 +115,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  role: "candidate" | "examiner" | "admin" | "super_admin";
+  role: "candidate" | "examiner" | "admin" | "super_admin" | "super-admin";
   is_active: boolean;
   created_at: string;
 }
@@ -399,6 +399,32 @@ export interface SpeakingSectionDetails {
   answer_details: SpeakingAnswerDetail[];
 }
 
+export interface WritingEvaluation {
+  overall_score: number;
+  task_achievement: number;
+  coherence_cohesion: number;
+  lexical_resource: number;
+  grammar_accuracy: number;
+  ai_detection?: string;
+  ai_generation_percentage?: number;
+  grammar_errors: number;
+  vocabulary_errors: number;
+  sentence_errors: number;
+  task_type?: string;
+  writing_level?: string;
+  ai_suggestions?: string;
+  motivation?: string;
+  word_corrections?: string;
+  sentence_corrections?: { original: string; corrected: string; explanation: string }[];
+  improved_version?: string;
+  overall_feedback?: string;
+}
+
+export interface WritingSectionDetails {
+  ai_evaluations?: Record<string, WritingEvaluation>;
+  [key: string]: unknown;
+}
+
 export interface SessionResult {
   session_id: string;
   test_id: string;
@@ -410,7 +436,7 @@ export interface SessionResult {
     raw_score: number;
     max_score: number;
     band_score: number;
-    details?: SpeakingSectionDetails | ListeningReadingDetails | Record<string, unknown>;
+    details?: SpeakingSectionDetails | ListeningReadingDetails | WritingSectionDetails | Record<string, unknown>;
   }[];
   overall_band?: number;
   started_at: string;
