@@ -12,6 +12,7 @@ import {
   BookOpen,
   Sun,
   Moon,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: "/questions",  label: "Questions",   icon: FileQuestion,    roles: ["admin", "super_admin", "super-admin", "examiner"] },
   { href: "/tests",      label: "Tests",       icon: ClipboardList,   roles: ["admin", "super_admin", "super-admin"] },
   { href: "/sessions",   label: "Sessions",    icon: GraduationCap,   roles: ["admin", "super_admin", "super-admin", "examiner"] },
+  { href: "/payments",   label: "Payments",    icon: CreditCard,      roles: ["admin", "super_admin", "super-admin"] },
 ];
 
 export function Sidebar() {

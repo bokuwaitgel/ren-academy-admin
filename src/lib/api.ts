@@ -239,6 +239,8 @@ export interface Test {
   test_type: string;
   module_type: string;
   is_published: boolean;
+  price: number;
+  currency: string;
   tags: string[];
   question_count: number;
   listening?: ListeningModuleData;
@@ -558,6 +560,89 @@ export const admin = {
       ),
     get: (sessionId: string) =>
       request<SpeakingPracticeSession>(`/api/admin/speaking-practice/get?session_id=${sessionId}`),
+  },
+};
+
+// ── Payments / Orders ────────────────────────
+
+export type OrderStatus = "pending" | "paid" | "cancelled" | "refunded" | "failed";
+
+export interface InvoicePayload {
+  invoice_id: string;
+  qr_text?: string;
+  qr_image?: string;
+  qPay_shortUrl?: string;
+  urls?: { name?: string; description?: string; logo?: string; link?: string }[];
+}
+
+export interface Order {
+  id: string;
+  user_id: string;
+  test_id: string;
+  test_title?: string | null;
+  amount: number;
+  currency: string;
+  status: OrderStatus;
+  qpay_invoice_id?: string;
+  qpay_payment_id?: string;
+  invoice?: InvoicePayload;
+  paid_at?: string;
+  cancelled_at?: string;
+  refunded_at?: string;
+  manual: boolean;
+  manual_note?: string;
+  manual_admin_id?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export const payments = {
+  // user-facing
+  createInvoice: (test_id: string) =>
+    request<Order>("/api/payments/create-invoice", {
+      method: "POST",
+      body: JSON.stringify({ test_id }),
+    }),
+  check: (order_id: string) =>
+    request<{ order: Order; paid_now: boolean }>(
+      `/api/payments/check?order_id=${order_id}`
+    ),
+  myOrders: (params: Record<string, string | number>) =>
+    request<Paginated<Order>>(
+      `/api/payments/my-orders?${new URLSearchParams(
+        Object.entries(params).map(([k, v]) => [k, String(v)])
+      )}`
+    ),
+  // admin-facing
+  admin: {
+    list: (params: Record<string, string | number>) =>
+      request<Paginated<Order>>(
+        `/api/admin/payments/list?${new URLSearchParams(
+          Object.entries(params).map(([k, v]) => [k, String(v)])
+        )}`
+      ),
+    get: (order_id: string) =>
+      request<Order>(`/api/admin/payments/get?order_id=${order_id}`),
+    recheck: (order_id: string) =>
+      request<{ order: Order; paid_now: boolean }>("/api/admin/payments/recheck", {
+        method: "POST",
+        body: JSON.stringify({ order_id }),
+      }),
+    cancel: (order_id: string, note?: string) =>
+      request<Order>("/api/admin/payments/cancel", {
+        method: "POST",
+        body: JSON.stringify({ order_id, note }),
+      }),
+    refund: (order_id: string, note?: string) =>
+      request<Order>("/api/admin/payments/refund", {
+        method: "POST",
+        body: JSON.stringify({ order_id, note }),
+      }),
+    markPaid: (order_id: string, note?: string) =>
+      request<Order>("/api/admin/payments/mark-paid", {
+        method: "POST",
+        body: JSON.stringify({ order_id, note }),
+      }),
   },
 };
 

@@ -87,12 +87,14 @@ export default function TestsPage() {
   const [editErr, setEditErr] = useState("");
   const [editForm, setEditForm] = useState({
     title: "", description: "", module_type: "academic", tags: "",
+    price: "0", currency: "MNT",
   });
   const [editModules, setEditModules] = useState<TestModules>(EMPTY_MODULES);
 
   // Create form state
   const [form, setForm] = useState({
     title: "", description: "", module_type: "academic", tags: "",
+    price: "0", currency: "MNT",
   });
   const [createModules, setCreateModules] = useState<TestModules>(EMPTY_MODULES);
 
@@ -137,6 +139,8 @@ export default function TestsPage() {
         description: form.description || undefined,
         module_type: form.module_type,
         tags: form.tags ? form.tags.split(",").map(t => t.trim()) : [],
+        price: Number(form.price) || 0,
+        currency: form.currency,
         ...(createModules.listening ? { listening: createModules.listening } : {}),
         ...(createModules.reading   ? { reading:   createModules.reading   } : {}),
         ...(createModules.writing   ? { writing:   createModules.writing   } : {}),
@@ -144,7 +148,7 @@ export default function TestsPage() {
       });
       toast.success("Test created");
       setCreating(false);
-      setForm({ title: "", description: "", module_type: "academic", tags: "" });
+      setForm({ title: "", description: "", module_type: "academic", tags: "", price: "0", currency: "MNT" });
       setCreateModules(EMPTY_MODULES);
       load();
     } catch (e: unknown) {
@@ -160,6 +164,8 @@ export default function TestsPage() {
       description: t.description ?? "",
       module_type: t.module_type,
       tags: t.tags.join(", "),
+      price: String(t.price ?? 0),
+      currency: t.currency || "MNT",
     });
     setEditTest(t);
     try {
@@ -181,6 +187,8 @@ export default function TestsPage() {
         description: editForm.description || undefined,
         module_type: editForm.module_type,
         tags: editForm.tags ? editForm.tags.split(",").map(t => t.trim()) : [],
+        price: Number(editForm.price) || 0,
+        currency: editForm.currency,
         listening: editModules.listening ?? null,
         reading:   editModules.reading   ?? null,
         writing:   editModules.writing   ?? null,
@@ -257,6 +265,7 @@ export default function TestsPage() {
                   <TableHead>Module</TableHead>
                   <TableHead>Modules</TableHead>
                   <TableHead>Questions</TableHead>
+                  <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -271,6 +280,11 @@ export default function TestsPage() {
                     </TableCell>
                     <TableCell><ModuleBadges t={t} /></TableCell>
                     <TableCell className="text-[var(--text-secondary)]">{t.question_count}</TableCell>
+                    <TableCell className="text-[var(--text-secondary)]">
+                      {t.price > 0
+                        ? `${t.price.toLocaleString()} ${t.currency}`
+                        : <span className="text-[var(--text-muted)]">Free</span>}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={t.is_published ? "success" : "secondary"}>
                         {t.is_published ? "Published" : "Draft"}
@@ -315,7 +329,7 @@ export default function TestsPage() {
                 ))}
                 {!data?.items.length && (
                   <TableRow>
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={8}>
                       <EmptyState
                         icon={ClipboardList}
                         title="No tests found"
@@ -497,6 +511,30 @@ export default function TestsPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid grid-cols-[1fr_5rem] gap-2">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Price</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={100}
+                    value={editForm.price}
+                    onChange={e => setEditForm(f => ({ ...f, price: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Currency</label>
+                  <Select value={editForm.currency} onValueChange={v => setEditForm(f => ({ ...f, currency: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MNT">MNT</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[var(--text-secondary)]">Modules</label>
@@ -556,6 +594,30 @@ export default function TestsPage() {
                     <SelectItem value="general">General Training</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="grid grid-cols-[1fr_5rem] gap-2">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Price</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={100}
+                    value={form.price}
+                    onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Currency</label>
+                  <Select value={form.currency} onValueChange={v => setForm(f => ({ ...f, currency: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MNT">MNT</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             <div className="space-y-1.5">
