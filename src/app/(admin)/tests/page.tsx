@@ -39,6 +39,11 @@ function sectionPricesFromForm(values: {
   };
 }
 
+function sectionPriceText(t: Test) {
+  const sp = t.section_prices ?? {};
+  return `L:${Number(sp.listening ?? 0).toLocaleString()}  R:${Number(sp.reading ?? 0).toLocaleString()}  W:${Number(sp.writing ?? 0).toLocaleString()}  S:${Number(sp.speaking ?? 0).toLocaleString()} ${t.currency || "MNT"}`;
+}
+
 function modulesFromTest(t: Test): TestModules {
   return {
     listening: t.listening ? {
@@ -326,9 +331,14 @@ export default function TestsPage() {
                     <TableCell><ModuleBadges t={t} /></TableCell>
                     <TableCell className="text-[var(--text-secondary)]">{t.question_count}</TableCell>
                     <TableCell className="text-[var(--text-secondary)]">
-                      {t.price > 0
-                        ? `${t.price.toLocaleString()} ${t.currency}`
-                        : <span className="text-[var(--text-muted)]">Free</span>}
+                      <div className="space-y-0.5">
+                        <div>
+                          {t.price > 0
+                            ? `${t.price.toLocaleString()} ${t.currency}`
+                            : <span className="text-[var(--text-muted)]">Free</span>}
+                        </div>
+                        <div className="text-[10px] text-[var(--text-muted)]">{sectionPriceText(t)}</div>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={t.is_published ? "success" : "secondary"}>
@@ -421,6 +431,13 @@ export default function TestsPage() {
                 {viewQLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--text-muted)] self-center" />}
               </div>
               {viewTest.description && <p className="text-[var(--text-secondary)]">{viewTest.description}</p>}
+              <div className="rounded-md border border-[var(--border-color)] bg-[var(--surface)] px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Pricing</p>
+                <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                  Full test: {viewTest.price > 0 ? `${viewTest.price.toLocaleString()} ${viewTest.currency}` : "Free"}
+                </p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">{sectionPriceText(viewTest)}</p>
+              </div>
 
               {/* Helper: renders question list for a set of IDs */}
               {(() => {
