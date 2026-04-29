@@ -202,6 +202,18 @@ export default function TestsPage() {
     setEditTest(t);
     try {
       const full = await tApi.get(t.id);
+      setEditForm({
+        title: full.title,
+        description: full.description ?? "",
+        module_type: full.module_type,
+        tags: full.tags.join(", "),
+        price: String(full.price ?? 0),
+        currency: full.currency || "MNT",
+        listening_price: String(full.section_prices?.listening ?? 0),
+        reading_price: String(full.section_prices?.reading ?? 0),
+        writing_price: String(full.section_prices?.writing ?? 0),
+        speaking_price: String(full.section_prices?.speaking ?? 0),
+      });
       setEditModules(modulesFromTest(full));
       setEditTest(full);
     } catch {
