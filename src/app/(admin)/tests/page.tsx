@@ -25,6 +25,20 @@ function truncate(s: string, n = 50) { return s.length > n ? s.slice(0, n) + "â€
 
 const EMPTY_MODULES: TestModules = {};
 
+function sectionPricesFromForm(values: {
+  listening_price: string;
+  reading_price: string;
+  writing_price: string;
+  speaking_price: string;
+}) {
+  return {
+    listening: Number(values.listening_price) || 0,
+    reading: Number(values.reading_price) || 0,
+    writing: Number(values.writing_price) || 0,
+    speaking: Number(values.speaking_price) || 0,
+  };
+}
+
 function modulesFromTest(t: Test): TestModules {
   return {
     listening: t.listening ? {
@@ -88,6 +102,7 @@ export default function TestsPage() {
   const [editForm, setEditForm] = useState({
     title: "", description: "", module_type: "academic", tags: "",
     price: "0", currency: "MNT",
+    listening_price: "0", reading_price: "0", writing_price: "0", speaking_price: "0",
   });
   const [editModules, setEditModules] = useState<TestModules>(EMPTY_MODULES);
 
@@ -95,6 +110,7 @@ export default function TestsPage() {
   const [form, setForm] = useState({
     title: "", description: "", module_type: "academic", tags: "",
     price: "0", currency: "MNT",
+    listening_price: "0", reading_price: "0", writing_price: "0", speaking_price: "0",
   });
   const [createModules, setCreateModules] = useState<TestModules>(EMPTY_MODULES);
 
@@ -141,6 +157,7 @@ export default function TestsPage() {
         tags: form.tags ? form.tags.split(",").map(t => t.trim()) : [],
         price: Number(form.price) || 0,
         currency: form.currency,
+        section_prices: sectionPricesFromForm(form),
         ...(createModules.listening ? { listening: createModules.listening } : {}),
         ...(createModules.reading   ? { reading:   createModules.reading   } : {}),
         ...(createModules.writing   ? { writing:   createModules.writing   } : {}),
@@ -148,7 +165,18 @@ export default function TestsPage() {
       });
       toast.success("Test created");
       setCreating(false);
-      setForm({ title: "", description: "", module_type: "academic", tags: "", price: "0", currency: "MNT" });
+      setForm({
+        title: "",
+        description: "",
+        module_type: "academic",
+        tags: "",
+        price: "0",
+        currency: "MNT",
+        listening_price: "0",
+        reading_price: "0",
+        writing_price: "0",
+        speaking_price: "0",
+      });
       setCreateModules(EMPTY_MODULES);
       load();
     } catch (e: unknown) {
@@ -166,6 +194,10 @@ export default function TestsPage() {
       tags: t.tags.join(", "),
       price: String(t.price ?? 0),
       currency: t.currency || "MNT",
+      listening_price: String(t.section_prices?.listening ?? 0),
+      reading_price: String(t.section_prices?.reading ?? 0),
+      writing_price: String(t.section_prices?.writing ?? 0),
+      speaking_price: String(t.section_prices?.speaking ?? 0),
     });
     setEditTest(t);
     try {
@@ -189,6 +221,7 @@ export default function TestsPage() {
         tags: editForm.tags ? editForm.tags.split(",").map(t => t.trim()) : [],
         price: Number(editForm.price) || 0,
         currency: editForm.currency,
+        section_prices: sectionPricesFromForm(editForm),
         listening: editModules.listening ?? null,
         reading:   editModules.reading   ?? null,
         writing:   editModules.writing   ?? null,
@@ -540,6 +573,24 @@ export default function TestsPage() {
               <label className="text-sm font-medium text-[var(--text-secondary)]">Modules</label>
               <TestModulesEditor modules={editModules} onChange={setEditModules} testId={editTest?.id} moduleType={editForm.module_type} />
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Listening Price</label>
+                <Input type="number" min={0} step={100} value={editForm.listening_price} onChange={e => setEditForm(f => ({ ...f, listening_price: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Reading Price</label>
+                <Input type="number" min={0} step={100} value={editForm.reading_price} onChange={e => setEditForm(f => ({ ...f, reading_price: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Writing Price</label>
+                <Input type="number" min={0} step={100} value={editForm.writing_price} onChange={e => setEditForm(f => ({ ...f, writing_price: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Speaking Price</label>
+                <Input type="number" min={0} step={100} value={editForm.speaking_price} onChange={e => setEditForm(f => ({ ...f, speaking_price: e.target.value }))} />
+              </div>
+            </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[var(--text-secondary)]">Tags (comma-separated)</label>
               <Input value={editForm.tags} onChange={e => setEditForm(f => ({ ...f, tags: e.target.value }))} placeholder="ielts, academic, 2024" />
@@ -623,6 +674,24 @@ export default function TestsPage() {
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[var(--text-secondary)]">Modules</label>
               <TestModulesEditor modules={createModules} onChange={setCreateModules} moduleType={form.module_type} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Listening Price</label>
+                <Input type="number" min={0} step={100} value={form.listening_price} onChange={e => setForm(f => ({ ...f, listening_price: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Reading Price</label>
+                <Input type="number" min={0} step={100} value={form.reading_price} onChange={e => setForm(f => ({ ...f, reading_price: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Writing Price</label>
+                <Input type="number" min={0} step={100} value={form.writing_price} onChange={e => setForm(f => ({ ...f, writing_price: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Speaking Price</label>
+                <Input type="number" min={0} step={100} value={form.speaking_price} onChange={e => setForm(f => ({ ...f, speaking_price: e.target.value }))} />
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[var(--text-secondary)]">Tags (comma-separated)</label>

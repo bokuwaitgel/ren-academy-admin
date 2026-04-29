@@ -241,6 +241,7 @@ export interface Test {
   is_published: boolean;
   price: number;
   currency: string;
+  section_prices?: Partial<Record<"listening" | "reading" | "writing" | "speaking", number>>;
   tags: string[];
   question_count: number;
   listening?: ListeningModuleData;
