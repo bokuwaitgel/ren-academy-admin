@@ -26,9 +26,9 @@ const SECTION_ABBR: Record<string, string> = {
 function SectionPill({ sec }: { sec: SessionSectionState }) {
   const base = "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold";
   if (sec.status === "completed")
-    return <span className={`${base} bg-emerald-950/60 text-emerald-400 border border-emerald-900`}><CheckCircle2 className="h-3 w-3" />{SECTION_ABBR[sec.section] ?? sec.section}</span>;
+    return <span className={`${base} bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-900`}><CheckCircle2 className="h-3 w-3" />{SECTION_ABBR[sec.section] ?? sec.section}</span>;
   if (sec.status === "in_progress")
-    return <span className={`${base} bg-amber-950/60 text-amber-400 border border-amber-900`}><Clock className="h-3 w-3" />{SECTION_ABBR[sec.section] ?? sec.section}</span>;
+    return <span className={`${base} bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-900`}><Clock className="h-3 w-3" />{SECTION_ABBR[sec.section] ?? sec.section}</span>;
   return <span className={`${base} bg-[var(--card-bg)] text-[var(--text-muted)] border border-[var(--border-color)]`}><Circle className="h-3 w-3" />{SECTION_ABBR[sec.section] ?? sec.section}</span>;
 }
 
@@ -98,7 +98,7 @@ function BandBar({ score }: { score: number | null }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-6 text-right text-xs font-bold text-indigo-300">{score}</span>
+      <span className="w-6 text-right text-xs font-bold text-indigo-700 dark:text-indigo-300">{score}</span>
     </div>
   );
 }
@@ -136,12 +136,12 @@ function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-xs text-[var(--text-muted)] shrink-0">
-                      {ans.part_number ? `Part ${ans.part_number}` : ""} Q{ans.index + 1}
+                      {ans.part_number ? `Part ${ans.part_number}` : ""} Q{i + 1}
                     </span>
                     <span className="text-xs text-[var(--text-secondary)] truncate">{ans.question || "—"}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {ev && <span className="text-sm font-bold text-indigo-400">{ev.overall_score}</span>}
+                    {ev && <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{ev.overall_score}</span>}
                     {isOpen ? <ChevronUp className="h-3 w-3 text-[var(--text-muted)]" /> : <ChevronDown className="h-3 w-3 text-[var(--text-muted)]" />}
                   </div>
                 </button>
@@ -166,13 +166,13 @@ function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
                     )}
                     {ev.strengths && (
                       <div>
-                        <span className="text-emerald-500 font-medium">Strengths: </span>
+                        <span className="text-emerald-700 dark:text-emerald-400 font-medium">Strengths: </span>
                         <span className="text-[var(--text-secondary)]">{ev.strengths}</span>
                       </div>
                     )}
                     {ev.areas_for_improvement && (
                       <div>
-                        <span className="text-amber-500 font-medium">Improve: </span>
+                        <span className="text-amber-700 dark:text-amber-400 font-medium">Improve: </span>
                         <span className="text-[var(--text-secondary)]">{ev.areas_for_improvement}</span>
                       </div>
                     )}
@@ -181,13 +181,13 @@ function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
                         <p className="text-[var(--text-muted)] mb-1">Sample improvements:</p>
                         <ul className="space-y-0.5">
                           {ev.sample_improvements.map((s, j) => (
-                            <li key={j} className="text-[var(--text-secondary)] pl-2 border-l border-indigo-800">&ldquo;{s}&rdquo;</li>
+                            <li key={j} className="text-[var(--text-secondary)] pl-2 border-l border-indigo-300 dark:border-indigo-800">&ldquo;{s}&rdquo;</li>
                           ))}
                         </ul>
                       </div>
                     )}
                     {ev.motivation && (
-                      <p className="text-indigo-400 italic">{ev.motivation}</p>
+                      <p className="text-indigo-600 dark:text-indigo-400 italic">{ev.motivation}</p>
                     )}
                   </div>
                 )}
@@ -256,8 +256,8 @@ function SubAnswerTable({ user, correct }: { user: unknown; correct: unknown }) 
                 u == null || u === ""
                   ? "text-[var(--text-muted)] italic"
                   : match
-                    ? "text-emerald-300"
-                    : "text-red-300"
+                    ? "text-emerald-700 dark:text-emerald-300"
+                    : "text-red-700 dark:text-red-300"
               }
             >
               {formatAnswer(u)}
@@ -265,8 +265,8 @@ function SubAnswerTable({ user, correct }: { user: unknown; correct: unknown }) 
             <span className="text-[var(--text-secondary)]">{formatAnswer(c)}</span>
             <span className="justify-self-end">
               {match
-                ? <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                : <Circle className="h-3 w-3 text-red-400/70" />}
+                ? <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                : <Circle className="h-3 w-3 text-red-500/70 dark:text-red-400/70" />}
             </span>
           </div>
         );
@@ -287,7 +287,7 @@ function AnswerDetailList({ details }: { details: ListeningReadingDetails }) {
     <div className="mt-2 space-y-1.5">
       <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] pb-1">
         <span>
-          <span className="font-bold text-emerald-400">{earnedSum}</span>/{maxSum} correct
+          <span className="font-bold text-emerald-600 dark:text-emerald-400">{earnedSum}</span>/{maxSum} correct
         </span>
       </div>
       {items.map((a, i) => {
@@ -299,20 +299,20 @@ function AnswerDetailList({ details }: { details: ListeningReadingDetails }) {
           <div
             key={a.question_id ?? i}
             className={`rounded-lg border px-3 py-2 text-xs ${
-              isCorrect ? "border-emerald-900 bg-emerald-950/20" :
-              isPartial ? "border-amber-900 bg-amber-950/20" :
-              isWrong ? "border-red-900/50 bg-red-950/10" :
+              isCorrect ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20" :
+              isPartial ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20" :
+              isWrong ? "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/10" :
               "border-[var(--border-color)] bg-[var(--surface)]"
             }`}
           >
             <div className="flex items-start justify-between gap-2">
               <span className="text-[var(--text-secondary)] leading-snug flex-1">{a.title || `Q${i + 1}`}</span>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className={`font-bold ${isCorrect ? "text-emerald-400" : isPartial ? "text-amber-400" : isWrong ? "text-red-400" : "text-[var(--text-muted)]"}`}>
+                <span className={`font-bold ${isCorrect ? "text-emerald-700 dark:text-emerald-400" : isPartial ? "text-amber-700 dark:text-amber-400" : isWrong ? "text-red-700 dark:text-red-400" : "text-[var(--text-muted)]"}`}>
                   {a.earned}/{a.max}
                 </span>
-                {isCorrect && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />}
-                {(isWrong || isPartial) && <Circle className="h-3.5 w-3.5 text-red-400" />}
+                {isCorrect && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
+                {(isWrong || isPartial) && <Circle className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />}
               </div>
             </div>
             {isMultiPart ? (
@@ -321,7 +321,7 @@ function AnswerDetailList({ details }: { details: ListeningReadingDetails }) {
               <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
                 <div>
                   <span className="text-[var(--text-muted)]">Your answer: </span>
-                  <span className={isCorrect ? "text-emerald-300" : "text-red-300"}>{formatAnswer(a.user_answer)}</span>
+                  <span className={isCorrect ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}>{formatAnswer(a.user_answer)}</span>
                 </div>
                 {!isCorrect && (
                   <div>
@@ -394,10 +394,10 @@ function WritingDetails({
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-xs font-semibold text-[var(--text-secondary)] shrink-0">{taskLabel}</span>
                 <span className="text-xs text-[var(--text-muted)]">{wc} words</span>
-                {!essay && <span className="text-xs text-red-400">no submission</span>}
+                {!essay && <span className="text-xs text-red-600 dark:text-red-400">no submission</span>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {ev && <span className="text-sm font-bold text-indigo-400">{ev.overall_score}</span>}
+                {ev && <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{ev.overall_score}</span>}
                 {isOpen ? <ChevronUp className="h-3 w-3 text-[var(--text-muted)]" /> : <ChevronDown className="h-3 w-3 text-[var(--text-muted)]" />}
               </div>
             </button>
@@ -447,7 +447,7 @@ function WritingDetails({
                     )}
                     {ev.ai_suggestions && (
                       <div>
-                        <span className="text-amber-500 font-medium">Suggestions: </span>
+                        <span className="text-amber-700 dark:text-amber-400 font-medium">Suggestions: </span>
                         <span className="text-[var(--text-secondary)]">{ev.ai_suggestions}</span>
                       </div>
                     )}
@@ -456,9 +456,9 @@ function WritingDetails({
                         <p className="text-[var(--text-muted)] mb-1">Sentence corrections:</p>
                         <ul className="space-y-1">
                           {ev.sentence_corrections.map((sc, j) => (
-                            <li key={j} className="pl-2 border-l border-indigo-800 space-y-0.5">
-                              <p className="text-red-300">{sc.original}</p>
-                              <p className="text-emerald-300">{sc.corrected}</p>
+                            <li key={j} className="pl-2 border-l border-indigo-300 dark:border-indigo-800 space-y-0.5">
+                              <p className="text-red-700 dark:text-red-300">{sc.original}</p>
+                              <p className="text-emerald-700 dark:text-emerald-300">{sc.corrected}</p>
                               <p className="text-[var(--text-muted)] italic">{sc.explanation}</p>
                             </li>
                           ))}
@@ -474,7 +474,7 @@ function WritingDetails({
                       </details>
                     )}
                     {ev.motivation && (
-                      <p className="italic text-indigo-400">{ev.motivation}</p>
+                      <p className="italic text-indigo-600 dark:text-indigo-400">{ev.motivation}</p>
                     )}
                   </>
                 )}
@@ -538,7 +538,7 @@ function SectionDetailList({ session }: { session: Session }) {
                 <SectionPill sec={sec} />
                 <span className="flex-1 text-sm capitalize text-[var(--text-secondary)]">{sec.section}</span>
                 {score?.band_score != null && (
-                  <span className="text-sm font-bold text-indigo-400">Band {score.band_score}</span>
+                  <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Band {score.band_score}</span>
                 )}
                 {sec.time_spent_seconds != null && (
                   <span className="text-xs text-[var(--text-muted)] ml-1">{fmtSecs(sec.time_spent_seconds)}</span>
@@ -563,7 +563,7 @@ function SectionDetailList({ session }: { session: Session }) {
                       <div className="flex gap-4">
                         <span>Score: <span className="font-bold text-[var(--text-primary)]">{score.raw_score}/{score.max_score}</span></span>
                         {score.band_score != null && (
-                          <span>Band: <span className="font-bold text-indigo-300">{score.band_score}</span></span>
+                          <span>Band: <span className="font-bold text-indigo-700 dark:text-indigo-300">{score.band_score}</span></span>
                         )}
                       </div>
                     </div>
@@ -739,7 +739,7 @@ export default function SessionsPage() {
                     <TableCell><StatusBadge status={s.status} /></TableCell>
                     <TableCell>
                       {s.overall_band != null
-                        ? <span className="font-bold text-indigo-400">{s.overall_band}</span>
+                        ? <span className="font-bold text-indigo-600 dark:text-indigo-400">{s.overall_band}</span>
                         : <span className="text-[var(--text-muted)]">—</span>}
                     </TableCell>
                     <TableCell className="text-xs text-[var(--text-muted)]">
@@ -754,7 +754,7 @@ export default function SessionsPage() {
                           <Button
                             variant="ghost" size="icon"
                             aria-label="View results"
-                            className="text-indigo-400 hover:bg-indigo-950/30"
+                            className="text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/30"
                             onClick={() => openResult(s)}
                           >
                             <Star className="h-4 w-4" />
@@ -764,7 +764,7 @@ export default function SessionsPage() {
                           <Button
                             variant="ghost" size="icon"
                             aria-label="Grade session"
-                            className="text-amber-400 hover:bg-amber-950/30"
+                            className="text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30"
                             onClick={() => { setGradeOpen(s); setGradeErr(""); }}
                           >
                             <CheckCircle2 className="h-4 w-4" />
@@ -774,7 +774,7 @@ export default function SessionsPage() {
                           <Button
                             variant="ghost" size="icon"
                             aria-label="Delete session"
-                            className="text-red-500 hover:bg-red-950/30"
+                            className="text-red-600 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-950/30"
                             onClick={() => setDeleteTarget(s)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -854,7 +854,7 @@ export default function SessionsPage() {
                 {viewSession.overall_band != null && (
                   <div>
                     <p className="text-xs text-[var(--text-muted)]">Overall Band</p>
-                    <p className="text-2xl font-bold text-indigo-400">{viewSession.overall_band}</p>
+                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{viewSession.overall_band}</p>
                   </div>
                 )}
                 {viewSession.current_section && (
@@ -892,7 +892,7 @@ export default function SessionsPage() {
                   {result.mode === "full_test" ? "Full Test" : "Practice"}
                 </Badge>
                 {result.overall_band != null && (
-                  <span className="ml-auto text-3xl font-bold text-indigo-400">{result.overall_band}</span>
+                  <span className="ml-auto text-3xl font-bold text-indigo-600 dark:text-indigo-400">{result.overall_band}</span>
                 )}
               </div>
               {result.section_scores.length > 0 && (
@@ -952,7 +952,7 @@ export default function SessionsPage() {
                 <Button variant="outline" className="flex-1">Cancel</Button>
               </DialogClose>
               <Button
-                className="flex-1 bg-red-700 hover:bg-red-600 text-white"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white dark:bg-red-700 dark:hover:bg-red-600"
                 onClick={handleDelete}
                 disabled={deleting}
               >
@@ -971,7 +971,7 @@ export default function SessionsPage() {
           </DialogHeader>
           <div className="space-y-4">
             {gradeErr && (
-              <div className="rounded border border-red-900 bg-red-950/50 p-3 text-sm text-red-400">{gradeErr}</div>
+              <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400">{gradeErr}</div>
             )}
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[var(--text-secondary)]">Section</label>
