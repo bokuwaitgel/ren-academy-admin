@@ -15,10 +15,26 @@ import { Plus, Search, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, Pencil, 
 import { EmptyState } from "@/components/ui/empty-state";
 
 const SECTIONS = [
-  { value: "listening", label: "Listening", icon: Headphones, color: "text-indigo-400 border-indigo-700 bg-indigo-950/30 hover:bg-indigo-950/50", activeColor: "border-indigo-500 bg-indigo-950/60 text-indigo-300" },
-  { value: "reading",   label: "Reading",   icon: BookOpen,   color: "text-emerald-400 border-emerald-700 bg-emerald-950/30 hover:bg-emerald-950/50", activeColor: "border-emerald-500 bg-emerald-950/60 text-emerald-300" },
-  { value: "writing",   label: "Writing",   icon: PenTool,    color: "text-amber-400 border-amber-700 bg-amber-950/30 hover:bg-amber-950/50", activeColor: "border-amber-500 bg-amber-950/60 text-amber-300" },
-  { value: "speaking",  label: "Speaking",  icon: Mic,        color: "text-[var(--text-secondary)] border-[var(--border-color)] bg-[var(--surface)] hover:bg-[var(--surface-secondary)]", activeColor: "border-[var(--text-secondary)] bg-[var(--surface-secondary)] text-[var(--text-primary)]" },
+  {
+    value: "listening", label: "Listening", icon: Headphones,
+    color: "text-indigo-700 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 dark:text-indigo-400 dark:border-indigo-700 dark:bg-indigo-950/30 dark:hover:bg-indigo-950/50",
+    activeColor: "border-indigo-500 bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300",
+  },
+  {
+    value: "reading", label: "Reading", icon: BookOpen,
+    color: "text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:border-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50",
+    activeColor: "border-emerald-500 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+  },
+  {
+    value: "writing", label: "Writing", icon: PenTool,
+    color: "text-amber-700 border-amber-200 bg-amber-50 hover:bg-amber-100 dark:text-amber-400 dark:border-amber-700 dark:bg-amber-950/30 dark:hover:bg-amber-950/50",
+    activeColor: "border-amber-500 bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
+  },
+  {
+    value: "speaking", label: "Speaking", icon: Mic,
+    color: "text-[var(--text-secondary)] border-[var(--border-color)] bg-[var(--surface)] hover:bg-[var(--surface-secondary)]",
+    activeColor: "border-[var(--text-secondary)] bg-[var(--surface-secondary)] text-[var(--text-primary)]",
+  },
 ];
 
 const SECTION_PARTS: Record<string, { value: string; label: string }[]> = {
@@ -292,7 +308,7 @@ export default function QuestionsPage() {
                                 {loadingEditId === q.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
                               </Button>
                               <Button variant="ghost" size="icon"
-                                className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
+                                className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-500 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                                 aria-label="Delete question"
                                 onClick={() => setDeleteTarget(q)} disabled={deletingId === q.id}>
                                 {deletingId === q.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
@@ -353,7 +369,7 @@ export default function QuestionsPage() {
                         </Button>
                         <Button
                           variant="ghost" size="icon"
-                          className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-500 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                           aria-label="Delete question"
                           onClick={() => setDeleteTarget(q)}
                           disabled={deletingId === q.id}

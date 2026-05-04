@@ -538,14 +538,14 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
             onClick={() => { if (s.id < step) setStep(s.id); }}
             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all ${
               s.id === step
-                ? "bg-[var(--foreground)] text-white shadow-sm"
+                ? "bg-indigo-600 text-white shadow-sm"
                 : s.id < step
                 ? "bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] cursor-pointer"
                 : "bg-[var(--elevated-bg)] text-[var(--text-secondary)]"
             }`}
           >
             <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
-              s.id < step ? "bg-green-500 text-white" : s.id === step ? "bg-[var(--card-bg)] text-[var(--foreground)]" : "bg-[var(--surface-secondary)] text-[var(--text-secondary)]"
+              s.id < step ? "bg-green-500 text-white" : s.id === step ? "bg-white/20 text-white" : "bg-[var(--surface-secondary)] text-[var(--text-secondary)]"
             }`}>
               {s.id < step ? <Check className="h-3 w-3" /> : s.id}
             </span>
@@ -584,7 +584,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
               }}
               className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
                 selected
-                  ? "border-[var(--foreground)] bg-[var(--elevated-bg)] shadow-sm"
+                  ? "border-indigo-500 bg-indigo-500/10 shadow-sm"
                   : "border-[var(--border-color)] hover:border-[var(--border-color)] hover:bg-[var(--elevated-bg)]"
               }`}
             >
@@ -598,7 +598,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 </div>
               </div>
               {selected && (
-                <Check className="ml-auto h-5 w-5 text-[var(--foreground)]" />
+                <Check className="ml-auto h-5 w-5 text-indigo-500" />
               )}
             </button>
           );
@@ -670,12 +670,12 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 onClick={() => updateForm({ type: qt.value })}
                 className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all ${
                   selected
-                    ? "border-[var(--foreground)] bg-[var(--elevated-bg)] ring-1 ring-[var(--foreground)]"
+                    ? "border-indigo-500 bg-indigo-500/10 ring-1 ring-indigo-500"
                     : "border-[var(--border-color)] hover:border-[var(--border-color)] hover:bg-[var(--elevated-bg)]"
                 }`}
               >
                 <div className={`flex h-9 w-9 items-center justify-center rounded-md ${
-                  selected ? "bg-[var(--foreground)] text-white" : "bg-[var(--surface)] text-[var(--text-muted)]"
+                  selected ? "bg-indigo-600 text-white" : "bg-[var(--surface)] text-[var(--text-muted)]"
                 }`}>
                   <Icon className="h-4 w-4" />
                 </div>
@@ -683,7 +683,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   <div className="font-medium text-sm text-[var(--foreground)]">{qt.label}</div>
                   <div className="text-xs text-[var(--text-muted)] truncate">{qt.description}</div>
                 </div>
-                {selected && <Check className="h-4 w-4 text-[var(--foreground)] shrink-0" />}
+                {selected && <Check className="h-4 w-4 text-indigo-500 shrink-0" />}
               </button>
             );
           })}

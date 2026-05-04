@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Make `dark:` classes respond to the .dark class on <html> set by next-themes */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   /* Light mode */
   --background: #ffffff;
