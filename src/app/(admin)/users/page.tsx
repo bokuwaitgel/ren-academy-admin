@@ -11,12 +11,16 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Search, ChevronLeft, ChevronRight, UserCog, Ban, Users } from "lucide-react";
+import { Loader2, Search, ChevronLeft, ChevronRight, UserCog, Ban, Users, UserPlus } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useAuth } from "@/lib/auth-context";
 
 type UserRow = User & { total_sessions?: number };
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.role === "super_admin" || currentUser?.role === "super-admin";
+
   const [data, setData] = useState<Paginated<UserRow> | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -29,6 +33,10 @@ export default function UsersPage() {
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<UserRow | null>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ username: "", email: "", password: "", role: "candidate" });
+  const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,6 +75,24 @@ export default function UsersPage() {
     finally { setDeactivatingId(null); }
   };
 
+  const handleCreateUser = async () => {
+    const username = createForm.username.trim();
+    const email = createForm.email.trim();
+    const password = createForm.password;
+    if (username.length < 3) { toast.error("Username must be at least 3 characters"); return; }
+    if (!email.includes("@")) { toast.error("Enter a valid email"); return; }
+    if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    setCreating(true);
+    try {
+      await admin.users.create({ username, email, password, role: createForm.role });
+      toast.success(`User ${username} created`);
+      setCreateOpen(false);
+      setCreateForm({ username: "", email: "", password: "", role: "candidate" });
+      load();
+    } catch (e) { showApiError(e, "Failed to create user"); }
+    finally { setCreating(false); }
+  };
+
   const handleSearchChange = (value: string) => {
     setSearch(value);
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -78,9 +104,17 @@ export default function UsersPage() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-[var(--text-primary)]">Users</h1>
-        <p className="text-sm text-[var(--text-muted)]">{data?.total ?? 0} total users</p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">Users</h1>
+          <p className="text-sm text-[var(--text-muted)]">{data?.total ?? 0} total users</p>
+        </div>
+        {isSuperAdmin && (
+          <Button onClick={() => setCreateOpen(true)}>
+            <UserPlus className="h-4 w-4" />
+            New User
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -164,7 +198,7 @@ export default function UsersPage() {
                         {u.is_active && (
                           <Button
                             variant="ghost" size="icon"
-                            className="text-red-500 hover:bg-red-950/40 hover:text-red-400"
+                            className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-500 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                             title="Deactivate"
                             aria-label="Deactivate user"
                             onClick={() => setDeactivateTarget(u)}
@@ -222,6 +256,67 @@ export default function UsersPage() {
         onConfirm={handleDeactivate}
         loading={deactivatingId === deactivateTarget?.id}
       />
+
+      {/* Create User Dialog (super-admin only) */}
+      <Dialog open={createOpen} onOpenChange={(open) => {
+        setCreateOpen(open);
+        if (!open) setCreateForm({ username: "", email: "", password: "", role: "candidate" });
+      }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Create User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Username</label>
+              <Input
+                value={createForm.username}
+                onChange={(e) => setCreateForm(f => ({ ...f, username: e.target.value }))}
+                placeholder="johndoe"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Email</label>
+              <Input
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="user@example.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Password</label>
+              <Input
+                type="password"
+                value={createForm.password}
+                onChange={(e) => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                placeholder="At least 6 characters"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Role</label>
+              <Select value={createForm.role} onValueChange={(v) => setCreateForm(f => ({ ...f, role: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="candidate">Candidate</SelectItem>
+                  <SelectItem value="examiner">Examiner</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1" onClick={() => setCreateOpen(false)} disabled={creating}>
+                Cancel
+              </Button>
+              <Button className="flex-1" onClick={handleCreateUser} disabled={creating}>
+                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Role Dialog */}
       <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>

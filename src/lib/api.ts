@@ -515,6 +515,11 @@ export const admin = {
       request<User & { total_sessions: number; completed_sessions: number; average_band?: number; recent_sessions: Session[] }>(
         `/api/admin/users/get?user_id=${id}`
       ),
+    create: (data: { username: string; email: string; password: string; role?: string }) =>
+      request<User>("/api/admin/users/create", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
     update: (id: string, data: { role?: string; is_active?: boolean }) =>
       request<User>("/api/admin/users/update", {
         method: "PUT",

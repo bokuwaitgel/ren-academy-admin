@@ -136,11 +136,11 @@ export default function DashboardPage() {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-[var(--text-secondary)]">Active</span>
-              <span className="text-lg font-bold text-amber-400">{fmt(stats?.active_sessions)}</span>
+              <span className="text-lg font-bold text-amber-600 dark:text-amber-400">{fmt(stats?.active_sessions)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[var(--text-secondary)]">Completed</span>
-              <span className="text-lg font-bold text-emerald-400">{fmt(stats?.completed_sessions)}</span>
+              <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{fmt(stats?.completed_sessions)}</span>
             </div>
             <div className="flex items-center justify-between border-t border-[var(--border-color)] pt-3">
               <span className="text-sm text-[var(--text-secondary)]">Avg Band</span>

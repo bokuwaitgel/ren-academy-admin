@@ -55,7 +55,7 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 active
-                  ? "bg-indigo-600/15 text-indigo-400 border-l-2 border-indigo-500 pl-[10px]"
+                  ? "bg-indigo-600/10 text-indigo-700 border-l-2 border-indigo-500 pl-[10px] dark:bg-indigo-600/15 dark:text-indigo-400"
                   : "text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
               )}
             >
@@ -86,7 +86,7 @@ export function Sidebar() {
         </button>
         <button
           onClick={logout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:bg-red-950/40 hover:text-red-400"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
         >
           <LogOut className="h-4 w-4" />
           Sign out
