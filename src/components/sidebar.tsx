@@ -13,18 +13,30 @@ import {
   Sun,
   Moon,
   CreditCard,
+  Handshake,
+  Tag,
+  Receipt,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "next-themes";
 
-const NAV_ITEMS = [
+const ADMIN_NAV_ITEMS = [
   { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard, roles: ["admin", "super_admin", "super-admin"] },
   { href: "/users",      label: "Users",       icon: Users,           roles: ["admin", "super_admin", "super-admin"] },
   { href: "/questions",  label: "Questions",   icon: FileQuestion,    roles: ["admin", "super_admin", "super-admin", "examiner"] },
   { href: "/tests",      label: "Tests",       icon: ClipboardList,   roles: ["admin", "super_admin", "super-admin"] },
   { href: "/sessions",   label: "Sessions",    icon: GraduationCap,   roles: ["admin", "super_admin", "super-admin", "examiner"] },
   { href: "/payments",   label: "Payments",    icon: CreditCard,      roles: ["admin", "super_admin", "super-admin"] },
+  { href: "/partners",   label: "Partners",    icon: Handshake,       roles: ["admin", "super_admin", "super-admin"] },
+];
+
+const PARTNER_NAV_ITEMS = [
+  { href: "/partner-portal",              label: "Overview",    icon: BarChart3 },
+  { href: "/partner-portal/campaigns",    label: "Campaigns",   icon: Tag },
+  { href: "/partner-portal/codes",        label: "Codes",       icon: ClipboardList },
+  { href: "/partner-portal/redemptions",  label: "Redemptions", icon: Receipt },
 ];
 
 export function Sidebar() {
@@ -46,7 +58,26 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5 px-3 py-4">
-        {NAV_ITEMS.filter(item => !user || item.roles.includes(user.role)).map(({ href, label, icon: Icon }) => {
+        {user?.role === "partner"
+          ? PARTNER_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href || pathname.startsWith(href + "/");
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-indigo-600/10 text-indigo-700 border-l-2 border-indigo-500 pl-[10px] dark:bg-indigo-600/15 dark:text-indigo-400"
+                      : "text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {label}
+                </Link>
+              );
+            })
+          : ADMIN_NAV_ITEMS.filter(item => !user || item.roles.includes(user.role)).map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Sidebar } from "@/components/sidebar";
 import { Loader2, Menu } from "lucide-react";
@@ -9,11 +9,20 @@ import { Loader2, Menu } from "lucide-react";
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
-  }, [loading, user, router]);
+    if (loading) return;
+    if (!user) { router.replace("/login"); return; }
+    const isPartner = user.role === "partner";
+    const inPartnerSection = pathname.startsWith("/partner-portal");
+    if (isPartner && !inPartnerSection) {
+      router.replace("/partner-portal");
+    } else if (!isPartner && inPartnerSection) {
+      router.replace("/dashboard");
+    }
+  }, [loading, user, pathname, router]);
 
   if (loading) {
     return (

@@ -17,7 +17,9 @@ function LoginForm() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) router.replace("/dashboard");
+    if (!loading && user) {
+      router.replace(user.role === "partner" ? "/partner-portal" : "/dashboard");
+    }
   }, [loading, user, router]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -26,7 +28,7 @@ function LoginForm() {
     setSubmitting(true);
     try {
       await login(email, password);
-      router.replace("/dashboard");
+      // Post-login redirect is handled by the useEffect once `user` is populated.
     } catch (err: unknown) {
       const apiErr = err as ApiError;
       setError(

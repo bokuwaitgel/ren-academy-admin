@@ -115,7 +115,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  role: "candidate" | "examiner" | "admin" | "super_admin" | "super-admin";
+  role: "candidate" | "examiner" | "admin" | "super_admin" | "super-admin" | "partner";
   is_active: boolean;
   created_at: string;
 }
@@ -703,6 +703,226 @@ export const storage = {
         sub_path: "images",
       }),
     }),
+};
+
+// ── Partners / Promo codes ───────────────────
+
+export type PartnerStatus = "active" | "suspended";
+export type CampaignType = "discount" | "free";
+export type CampaignStatus = "active" | "paused" | "ended";
+export type PromoCodeStatus = "active" | "reserved" | "used" | "expired" | "revoked";
+
+export interface Partner {
+  id: string;
+  name: string;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  contract_note?: string | null;
+  profit_share_pct: number;
+  owner_user_id?: string | null;
+  status: PartnerStatus;
+  created_at: string;
+  updated_at?: string;
+  // decorated fields:
+  total_codes?: number;
+  used_codes?: number;
+  active_campaigns?: number;
+}
+
+export interface Campaign {
+  id: string;
+  partner_id: string;
+  name: string;
+  code_type: CampaignType;
+  discount_pct?: number | null;
+  max_uses?: number | null;
+  total_codes: number;
+  prefix?: string | null;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  status: CampaignStatus;
+  uses_count?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface PromoCode {
+  id: string;
+  code: string;
+  partner_id: string;
+  campaign_id: string;
+  status: PromoCodeStatus;
+  used_by_user_id?: string | null;
+  used_by_username?: string | null;
+  used_at?: string | null;
+  reserved_order_id?: string | null;
+  created_at: string;
+}
+
+export interface Redemption {
+  id: string;
+  code: string;
+  code_id: string;
+  campaign_id: string;
+  partner_id: string;
+  user_id: string;
+  username?: string | null;
+  order_id: string;
+  test_id?: string | null;
+  test_title?: string | null;
+  amount_original: number;
+  amount_paid: number;
+  amount_discounted: number;
+  currency: string;
+  created_at: string;
+}
+
+export interface PartnerSummary {
+  partner: Partner;
+  totals: {
+    codes_total: number;
+    codes_active: number;
+    codes_used: number;
+    codes_revoked: number;
+    campaigns_active: number;
+  };
+  mtd: {
+    redemptions: number;
+    gross: number;
+    paid: number;
+    discount: number;
+    payout: number;
+    currency: string;
+  };
+}
+
+const qs = (params: Record<string, string | number | undefined | null>) =>
+  new URLSearchParams(
+    Object.entries(params)
+      .filter(([, v]) => v !== undefined && v !== null && v !== "")
+      .map(([k, v]) => [k, String(v)])
+  ).toString();
+
+export const partners = {
+  // admin
+  admin: {
+    list: (params: Record<string, string | number> = {}) =>
+      request<Paginated<Partner>>(`/api/admin/partners/list?${qs(params)}`),
+    get: (partner_id: string) =>
+      request<Partner>(`/api/admin/partners/get?partner_id=${partner_id}`),
+    create: (data: {
+      name: string;
+      contact_email?: string;
+      contact_phone?: string;
+      contract_note?: string;
+      profit_share_pct?: number;
+      owner_user_id?: string;
+    }) =>
+      request<Partner>("/api/admin/partners/create", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    update: (
+      partner_id: string,
+      data: Partial<{
+        name: string;
+        contact_email: string;
+        contact_phone: string;
+        contract_note: string;
+        profit_share_pct: number;
+        owner_user_id: string;
+        status: PartnerStatus;
+      }>
+    ) =>
+      request<Partner>("/api/admin/partners/update", {
+        method: "PUT",
+        body: JSON.stringify({ partner_id, ...data }),
+      }),
+    delete: (partner_id: string) =>
+      request<{ status: string }>("/api/admin/partners/delete", {
+        method: "DELETE",
+        body: JSON.stringify({ partner_id }),
+      }),
+    campaigns: {
+      list: (partner_id: string, params: Record<string, string | number> = {}) =>
+        request<Paginated<Campaign>>(
+          `/api/admin/partners/campaigns/list?${qs({ partner_id, ...params })}`
+        ),
+      create: (data: {
+        partner_id: string;
+        name: string;
+        code_type: CampaignType;
+        total_codes: number;
+        discount_pct?: number;
+        max_uses?: number;
+        prefix?: string;
+        valid_from?: string;
+        valid_until?: string;
+      }) =>
+        request<Campaign & { minted: number }>(
+          "/api/admin/partners/campaigns/create",
+          { method: "POST", body: JSON.stringify(data) }
+        ),
+      update: (
+        campaign_id: string,
+        data: Partial<{
+          name: string;
+          valid_from: string;
+          valid_until: string;
+          status: CampaignStatus;
+        }>
+      ) =>
+        request<Campaign>("/api/admin/partners/campaigns/update", {
+          method: "PUT",
+          body: JSON.stringify({ campaign_id, ...data }),
+        }),
+    },
+    codes: {
+      list: (params: {
+        campaign_id?: string;
+        partner_id?: string;
+        status?: PromoCodeStatus;
+        page?: number;
+        page_size?: number;
+      }) =>
+        request<Paginated<PromoCode>>(`/api/admin/partners/codes/list?${qs(params)}`),
+      revoke: (code_id: string) =>
+        request<PromoCode>("/api/admin/partners/codes/revoke", {
+          method: "POST",
+          body: JSON.stringify({ code_id }),
+        }),
+      exportCsv: (campaign_id: string) =>
+        request<{ filename: string; content_type: string; body: string; row_count: number }>(
+          `/api/admin/partners/codes/export?campaign_id=${campaign_id}`
+        ),
+    },
+    redemptions: {
+      list: (params: {
+        partner_id?: string;
+        campaign_id?: string;
+        page?: number;
+        page_size?: number;
+      }) =>
+        request<Paginated<Redemption>>(
+          `/api/admin/partners/redemptions/list?${qs(params)}`
+        ),
+    },
+  },
+  // partner portal (role=partner)
+  portal: {
+    me: () => request<{ user: User; partner: Partner }>("/api/partner/me"),
+    summary: () => request<PartnerSummary>("/api/partner/summary"),
+    campaigns: (params: Record<string, string | number> = {}) =>
+      request<Paginated<Campaign>>(`/api/partner/campaigns/list?${qs(params)}`),
+    codes: (params: { campaign_id?: string; status?: PromoCodeStatus; page?: number; page_size?: number } = {}) =>
+      request<Paginated<PromoCode>>(`/api/partner/codes/list?${qs(params)}`),
+    codesExport: (campaign_id: string) =>
+      request<{ filename: string; content_type: string; body: string; row_count: number }>(
+        `/api/partner/codes/export?campaign_id=${campaign_id}`
+      ),
+    redemptions: (params: { campaign_id?: string; page?: number; page_size?: number } = {}) =>
+      request<Paginated<Redemption>>(`/api/partner/redemptions/list?${qs(params)}`),
+  },
 };
 
 // ── Error helper ─────────────────────────────
