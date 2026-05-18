@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { partners, showApiError, type PartnerSummary } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Tag, ClipboardList, Receipt, Wallet } from "lucide-react";
+import { Loader2, Tag, ClipboardList, Receipt } from "lucide-react";
 
 export default function PartnerOverviewPage() {
   const [data, setData] = useState<PartnerSummary | null>(null);
@@ -33,9 +32,7 @@ export default function PartnerOverviewPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold">{data.partner.name}</h1>
-        <p className="text-sm text-[var(--text-muted)]">
-          Profit share: <Badge variant="indigo">{data.partner.profit_share_pct.toFixed(1)}%</Badge>
-        </p>
+        <p className="text-sm text-[var(--text-muted)]">Partner portal</p>
       </div>
 
       <section>
@@ -52,13 +49,9 @@ export default function PartnerOverviewPage() {
         <h2 className="mb-3 text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wide">Month to date</h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard icon={Receipt} label="Redemptions" value={fmt(data.mtd.redemptions)} />
-          <StatCard icon={Wallet} label="Gross sales" value={`${fmt(data.mtd.gross)} ${data.mtd.currency}`} />
-          <StatCard icon={Wallet} label="Discount given" value={`−${fmt(data.mtd.discount)} ${data.mtd.currency}`} accent="emerald" />
-          <StatCard icon={Wallet} label="Estimated payout" value={`${fmt(data.mtd.payout)} ${data.mtd.currency}`} accent="indigo" />
         </div>
         <p className="mt-3 text-xs text-[var(--text-muted)]">
-          Payout is calculated as paid revenue × profit share ({data.partner.profit_share_pct.toFixed(1)}%).
-          Final amount is reconciled at month end.
+          Санхүүгийн тооцоо болон төлбөрийн дэлгэрэнгүй мэдээллийг сар тутмын тайлангаар админ багаас хүлээн авна.
         </p>
       </section>
     </div>

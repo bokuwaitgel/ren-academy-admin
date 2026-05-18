@@ -709,7 +709,7 @@ export const storage = {
 
 export type PartnerStatus = "active" | "suspended";
 export type CampaignType = "discount" | "free";
-export type CampaignStatus = "active" | "paused" | "ended";
+export type CampaignStatus = "active" | "paused" | "finished";
 export type PromoCodeStatus = "active" | "reserved" | "used" | "expired" | "revoked";
 
 export interface Partner {
@@ -778,7 +778,11 @@ export interface Redemption {
 }
 
 export interface PartnerSummary {
-  partner: Partner;
+  partner: {
+    id: string;
+    name: string;
+    profit_share_pct: number;
+  };
   totals: {
     codes_total: number;
     codes_active: number;
@@ -788,11 +792,6 @@ export interface PartnerSummary {
   };
   mtd: {
     redemptions: number;
-    gross: number;
-    paid: number;
-    discount: number;
-    payout: number;
-    currency: string;
   };
 }
 
