@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "next-themes";
+import { getRoleLabel } from "@/lib/roles";
 
 const ADMIN_NAV_ITEMS = [
   { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard, roles: ["admin", "super_admin", "super-admin"] },
@@ -104,7 +105,7 @@ export function Sidebar() {
             <p className="truncate text-sm font-medium text-[var(--text-primary)]">{user.username}</p>
             <p className="truncate text-xs text-[var(--text-muted)]">{user.email}</p>
             <span className="mt-1 inline-block rounded-md border border-[var(--border-color)] bg-[var(--surface)] px-1.5 py-0.5 text-xs capitalize text-[var(--text-secondary)]">
-              {user.role}
+              {getRoleLabel(user.role)}
             </span>
           </div>
         )}

@@ -14,6 +14,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Search, ChevronLeft, ChevronRight, UserCog, Ban, Users, UserPlus } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAuth } from "@/lib/auth-context";
+import {
+  FILTERABLE_ROLES,
+  getRoleDescription,
+  getRoleLabel,
+  getRoleOptions,
+  normalizeRole,
+  toApiRole,
+  type CanonicalRole,
+} from "@/lib/roles";
 
 type UserRow = User & { total_sessions?: number };
 
@@ -28,14 +37,21 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState("all");
 
   const [editUser, setEditUser] = useState<UserRow | null>(null);
-  const [editRole, setEditRole] = useState("");
+  const [editRole, setEditRole] = useState<CanonicalRole>("candidate");
   const [saving, setSaving] = useState(false);
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<UserRow | null>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({ username: "", email: "", password: "", role: "candidate" });
+  const [createForm, setCreateForm] = useState<{ username: string; email: string; password: string; role: CanonicalRole }>({
+    username: "",
+    email: "",
+    password: "",
+    role: "candidate",
+  });
+
+  const roleOptions = getRoleOptions(isSuperAdmin);
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
@@ -55,8 +71,8 @@ export default function UsersPage() {
     if (!editUser) return;
     setSaving(true);
     try {
-      await admin.users.update(editUser.id, { role: editRole });
-      toast.success(`Role updated to ${editRole}`);
+      await admin.users.update(editUser.id, { role: toApiRole(editRole) });
+      toast.success(`Role updated to ${getRoleLabel(editRole)}`);
       setEditUser(null);
       load();
     } catch (e) { showApiError(e, "Failed to update role"); }
@@ -84,7 +100,7 @@ export default function UsersPage() {
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     setCreating(true);
     try {
-      await admin.users.create({ username, email, password, role: createForm.role });
+      await admin.users.create({ username, email, password, role: toApiRole(createForm.role) });
       toast.success(`User ${username} created`);
       setCreateOpen(false);
       setCreateForm({ username: "", email: "", password: "", role: "candidate" });
@@ -134,9 +150,11 @@ export default function UsersPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="examiner">Examiner</SelectItem>
-            <SelectItem value="candidate">Candidate</SelectItem>
+            {FILTERABLE_ROLES.map((role) => (
+              <SelectItem key={role} value={role}>
+                {getRoleLabel(role)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -171,7 +189,7 @@ export default function UsersPage() {
                         variant={u.role === "admin" ? "indigo" : u.role === "examiner" ? "warning" : "secondary"}
                         className="capitalize"
                       >
-                        {u.role}
+                        {getRoleLabel(u.role)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -191,7 +209,7 @@ export default function UsersPage() {
                           variant="ghost" size="icon"
                           title="Edit role"
                           aria-label="Edit role"
-                          onClick={() => { setEditUser(u); setEditRole(u.role); }}
+                          onClick={() => { setEditUser(u); setEditRole(normalizeRole(u.role)); }}
                         >
                           <UserCog className="h-4 w-4" />
                         </Button>
@@ -296,15 +314,19 @@ export default function UsersPage() {
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[var(--text-secondary)]">Role</label>
-              <Select value={createForm.role} onValueChange={(v) => setCreateForm(f => ({ ...f, role: v }))}>
+              <Select value={createForm.role} onValueChange={(v) => setCreateForm(f => ({ ...f, role: v as CanonicalRole }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="candidate">Candidate</SelectItem>
-                  <SelectItem value="examiner">Examiner</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  {roleOptions.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs leading-relaxed text-[var(--text-muted)]">
+                {getRoleDescription(createForm.role)}
+              </p>
             </div>
             <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1" onClick={() => setCreateOpen(false)} disabled={creating}>
@@ -332,18 +354,23 @@ export default function UsersPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[var(--text-secondary)]">Role</label>
-                <Select value={editRole} onValueChange={setEditRole}>
+                <Select value={editRole} onValueChange={(v) => setEditRole(v as CanonicalRole)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="candidate">Candidate</SelectItem>
-                    <SelectItem value="examiner">Examiner</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    {roleOptions.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs leading-relaxed text-[var(--text-muted)]">
+                  {getRoleDescription(editRole)}
+                </p>
               </div>
               <div className="flex gap-2 pt-1">
                 <Button variant="outline" className="flex-1" onClick={() => setEditUser(null)}>Cancel</Button>
-                <Button className="flex-1" onClick={handleSaveRole} disabled={saving || editRole === editUser.role}>
+                <Button className="flex-1" onClick={handleSaveRole} disabled={saving || editRole === normalizeRole(editUser.role)}>
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
                 </Button>
               </div>

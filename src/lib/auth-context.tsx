@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const u = await auth.me();
     if (!["admin", "examiner", "super_admin", "super-admin", "partner"].includes(u.role)) {
       clearTokens();
-      throw { detail: "Access denied. Admin, examiner, or partner role required.", status: 403 };
+      throw { detail: "Access denied. Admin, Super Admin, Examiner, or Partner role required.", status: 403 };
     }
     setUser(u);
   };
