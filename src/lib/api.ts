@@ -32,7 +32,8 @@ let isRefreshing = false;
 async function request<T>(
   path: string,
   options: RequestInit = {},
-  skipAuth = false
+  skipAuth = false,
+  timeoutMs = 30_000
 ): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -44,7 +45,7 @@ async function request<T>(
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   let res: Response;
   try {
@@ -77,7 +78,7 @@ async function request<T>(
         setTokens(refreshRes.access_token, refreshRes.refresh_token);
         isRefreshing = false;
         // Retry original request with new token
-        return request<T>(path, options, false);
+        return request<T>(path, options, false, timeoutMs);
       } catch {
         isRefreshing = false;
         clearTokens();
@@ -654,6 +655,11 @@ export const payments = {
 
 // ── Storage ──────────────────────────────────
 
+// Uploads send base64-encoded media in the JSON body, which can be large
+// (multi-MB listening audio). Give them a much longer timeout than the
+// default 30s API request so slow connections don't abort mid-upload.
+const UPLOAD_TIMEOUT_MS = 120_000;
+
 export const storage = {
   uploadListeningAudio: (testId: string, moduleType: string, fileName: string, base64: string) =>
     request<{ url: string; key: string }>("/api/storage/admin/s3/upload-listening-audio", {
@@ -665,7 +671,7 @@ export const storage = {
         file_content_base64: base64,
         content_type: "audio/mpeg",
       }),
-    }),
+    }, false, UPLOAD_TIMEOUT_MS),
   uploadWritingImage: (testId: string, moduleType: string, fileName: string, base64: string) =>
     request<{ url: string; key: string }>("/api/storage/admin/s3/upload-question-file", {
       method: "POST",
@@ -677,7 +683,7 @@ export const storage = {
         file_content_base64: base64,
         sub_path: "images",
       }),
-    }),
+    }, false, UPLOAD_TIMEOUT_MS),
   uploadQuestionAudio: (section: string, fileName: string, base64: string) =>
     request<{ url: string; key: string }>("/api/storage/admin/s3/upload-question-file", {
       method: "POST",
@@ -690,7 +696,7 @@ export const storage = {
         content_type: "audio/mpeg",
         sub_path: "audio",
       }),
-    }),
+    }, false, UPLOAD_TIMEOUT_MS),
   uploadQuestionImage: (section: string, fileName: string, base64: string) =>
     request<{ url: string; key: string }>("/api/storage/admin/s3/upload-question-file", {
       method: "POST",
@@ -702,7 +708,7 @@ export const storage = {
         file_content_base64: base64,
         sub_path: "images",
       }),
-    }),
+    }, false, UPLOAD_TIMEOUT_MS),
 };
 
 // ── Partners / Promo codes ───────────────────

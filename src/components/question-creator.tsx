@@ -304,8 +304,15 @@ function QuestionFileUpload({
       });
       const result = await uploadFn(file.name, base64);
       onChange(result.url);
-    } catch {
-      setErr("Upload failed");
+    } catch (e) {
+      const apiErr = e as { detail?: unknown; status?: number };
+      if (apiErr?.status === 413) {
+        setErr("File too large — please upload a smaller file");
+      } else if (typeof apiErr?.detail === "string") {
+        setErr(apiErr.detail);
+      } else {
+        setErr("Upload failed — please try again");
+      }
     } finally {
       setUploading(false);
       if (ref.current) ref.current.value = "";
@@ -793,6 +800,17 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
             <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Answer Options</h3>
             <p className="text-sm text-[var(--text-muted)]">Add options and select the correct one</p>
           </div>
+          {/* Question text shown to the candidate */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Question *</label>
+            <textarea
+              className="flex w-full rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm shadow-sm placeholder:text-[var(--text-secondary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-color)] min-h-[60px] resize-y"
+              value={form.title}
+              onChange={(e) => updateForm({ title: e.target.value })}
+              placeholder="e.g. What does the speaker say about the museum?"
+            />
+            <p className="text-[11px] text-[var(--text-secondary)]">This is the question text shown to the candidate above the options.</p>
+          </div>
           <div className="space-y-2">
             {form.options.map((opt, i) => (
               <div key={i} className="flex items-center gap-2">
@@ -869,6 +887,18 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
               <br />
               <span className="text-[var(--text-secondary)]">e.g. Questions 19 &amp; 20: Choose TWO correct letters</span>
             </p>
+          </div>
+
+          {/* Question text shown to the candidate */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Question *</label>
+            <textarea
+              className="flex w-full rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm shadow-sm placeholder:text-[var(--text-secondary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-color)] min-h-[60px] resize-y"
+              value={form.title}
+              onChange={(e) => updateForm({ title: e.target.value })}
+              placeholder="e.g. Which TWO facilities does the speaker mention?"
+            />
+            <p className="text-[11px] text-[var(--text-secondary)]">This is the question text shown to the candidate above the options.</p>
           </div>
 
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
