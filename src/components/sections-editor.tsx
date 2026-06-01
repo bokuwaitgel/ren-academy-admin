@@ -108,7 +108,7 @@ type FileUploadInputProps = {
   value: string;
   accept: string;
   placeholder: string;
-  uploadFn: (fileName: string, base64: string) => Promise<{ url: string; key: string }>;
+  uploadFn: (file: File) => Promise<{ url: string; key: string }>;
   onChange: (url: string) => void;
 };
 
@@ -123,16 +123,7 @@ function FileUploadInput({ value, accept, placeholder, uploadFn, onChange }: Fil
     setErr("");
     setUploading(true);
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const r = reader.result as string;
-          resolve(r.includes(",") ? r.split(",")[1] : r);
-        };
-        reader.onerror = () => reject(new Error("read error"));
-        reader.readAsDataURL(file);
-      });
-      const result = await uploadFn(file.name, base64);
+      const result = await uploadFn(file);
       onChange(result.url);
     } catch {
       setErr("Upload failed");
@@ -475,8 +466,8 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
                   accept="audio/*"
                   placeholder="Upload audio file"
                   onChange={(url) => updateListeningSection(i, { audio_url: url })}
-                  uploadFn={(fileName, base64) =>
-                    storage.uploadListeningAudio(effectiveTestId, effectiveModuleType, fileName, base64)
+                  uploadFn={(file) =>
+                    storage.uploadListeningAudio(effectiveTestId, effectiveModuleType, file)
                   }
                 />
               </div>
@@ -558,8 +549,8 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
                     accept="image/*"
                     placeholder="Upload image"
                     onChange={(url) => updateWritingTask(i, { image_url: url || undefined })}
-                    uploadFn={(fileName, base64) =>
-                      storage.uploadWritingImage(effectiveTestId, effectiveModuleType, fileName, base64)
+                    uploadFn={(file) =>
+                      storage.uploadWritingImage(effectiveTestId, effectiveModuleType, file)
                     }
                   />
                 </div>

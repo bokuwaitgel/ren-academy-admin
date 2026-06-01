@@ -655,60 +655,74 @@ export const payments = {
 
 // ── Storage ──────────────────────────────────
 
-// Uploads send base64-encoded media in the JSON body, which can be large
-// (multi-MB listening audio). Give them a much longer timeout than the
-// default 30s API request so slow connections don't abort mid-upload.
-const UPLOAD_TIMEOUT_MS = 120_000;
+// Uploads stream raw file bytes via multipart/form-data — no base64 inflation.
+// Allow a long timeout so slow connections don't abort mid-upload.
+const UPLOAD_TIMEOUT_MS = 300_000;
+
+async function uploadMultipart(
+  fields: Record<string, string>,
+  file: File,
+): Promise<{ url: string; key: string }> {
+  const form = new FormData();
+  for (const [k, v] of Object.entries(fields)) form.append(k, v);
+  form.append("file", file, file.name);
+
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/storage/admin/s3/upload-question-multipart`, {
+      method: "POST",
+      headers,
+      body: form,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw { detail: "Upload timed out", status: 0 } as ApiError;
+    }
+    throw { detail: `Network error — could not reach ${API_BASE}`, status: 0 } as ApiError;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!res.ok) {
+    let detail: string | Record<string, unknown> = res.statusText;
+    try {
+      const body = await res.json();
+      detail = body.detail || body;
+    } catch {}
+    throw { detail, status: res.status } as ApiError;
+  }
+  return res.json();
+}
 
 export const storage = {
-  uploadListeningAudio: (testId: string, moduleType: string, fileName: string, base64: string) =>
-    request<{ url: string; key: string }>("/api/storage/admin/s3/upload-listening-audio", {
-      method: "POST",
-      body: JSON.stringify({
-        test_id: testId,
-        module_type: moduleType,
-        file_name: fileName,
-        file_content_base64: base64,
-        content_type: "audio/mpeg",
-      }),
-    }, false, UPLOAD_TIMEOUT_MS),
-  uploadWritingImage: (testId: string, moduleType: string, fileName: string, base64: string) =>
-    request<{ url: string; key: string }>("/api/storage/admin/s3/upload-question-file", {
-      method: "POST",
-      body: JSON.stringify({
-        test_id: testId,
-        module_type: moduleType,
-        section: "writing",
-        file_name: fileName,
-        file_content_base64: base64,
-        sub_path: "images",
-      }),
-    }, false, UPLOAD_TIMEOUT_MS),
-  uploadQuestionAudio: (section: string, fileName: string, base64: string) =>
-    request<{ url: string; key: string }>("/api/storage/admin/s3/upload-question-file", {
-      method: "POST",
-      body: JSON.stringify({
-        test_id: "questions",
-        module_type: "general",
-        section,
-        file_name: fileName,
-        file_content_base64: base64,
-        content_type: "audio/mpeg",
-        sub_path: "audio",
-      }),
-    }, false, UPLOAD_TIMEOUT_MS),
-  uploadQuestionImage: (section: string, fileName: string, base64: string) =>
-    request<{ url: string; key: string }>("/api/storage/admin/s3/upload-question-file", {
-      method: "POST",
-      body: JSON.stringify({
-        test_id: "questions",
-        module_type: "general",
-        section,
-        file_name: fileName,
-        file_content_base64: base64,
-        sub_path: "images",
-      }),
-    }, false, UPLOAD_TIMEOUT_MS),
+  uploadListeningAudio: (testId: string, moduleType: string, file: File) =>
+    uploadMultipart(
+      { test_id: testId, module_type: moduleType, section: "listening", sub_path: "audio", content_type: "audio/mpeg" },
+      file,
+    ),
+  uploadWritingImage: (testId: string, moduleType: string, file: File) =>
+    uploadMultipart(
+      { test_id: testId, module_type: moduleType, section: "writing", sub_path: "images" },
+      file,
+    ),
+  uploadQuestionAudio: (section: string, file: File) =>
+    uploadMultipart(
+      { test_id: "questions", module_type: "general", section, sub_path: "audio", content_type: "audio/mpeg" },
+      file,
+    ),
+  uploadQuestionImage: (section: string, file: File) =>
+    uploadMultipart(
+      { test_id: "questions", module_type: "general", section, sub_path: "images" },
+      file,
+    ),
 };
 
 // ── Partners / Promo codes ───────────────────

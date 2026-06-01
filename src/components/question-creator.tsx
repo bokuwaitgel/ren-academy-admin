@@ -280,7 +280,7 @@ function QuestionFileUpload({
   value: string;
   accept: string;
   placeholder: string;
-  uploadFn: (fileName: string, base64: string) => Promise<{ url: string; key: string }>;
+  uploadFn: (file: File) => Promise<{ url: string; key: string }>;
   onChange: (url: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
@@ -293,16 +293,7 @@ function QuestionFileUpload({
     setErr("");
     setUploading(true);
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const r = reader.result as string;
-          resolve(r.includes(",") ? r.split(",")[1] : r);
-        };
-        reader.onerror = () => reject(new Error("read error"));
-        reader.readAsDataURL(file);
-      });
-      const result = await uploadFn(file.name, base64);
+      const result = await uploadFn(file);
       onChange(result.url);
     } catch (e) {
       const apiErr = e as { detail?: unknown; status?: number };
@@ -761,7 +752,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
             value={form.audio_url}
             accept="audio/*"
             placeholder="Upload audio file"
-            uploadFn={(name, b64) => storage.uploadQuestionAudio(form.section, name, b64)}
+            uploadFn={(file) => storage.uploadQuestionAudio(form.section, file)}
             onChange={(url) => updateForm({ audio_url: url })}
           />
         )}
@@ -770,7 +761,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
           value={form.image_url}
           accept="image/*"
           placeholder="Upload image"
-          uploadFn={(name, b64) => storage.uploadQuestionImage(form.section, name, b64)}
+          uploadFn={(file) => storage.uploadQuestionImage(form.section, file)}
           onChange={(url) => updateForm({ image_url: url })}
         />
       </div>
