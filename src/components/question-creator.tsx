@@ -147,6 +147,11 @@ interface QuestionFormData {
   form_fields: { label: string; prefix: string; answer: string }[];
   // Table completion
   table_cells: { row_header: string; col_header: string; answer: string }[];
+  // Table completion — rich layout (free-form grid with {n} inline blanks)
+  table_mode: "grid" | "layout";
+  table_columns: string[];
+  table_rows: string[][];
+  table_answers: string[];
   // Flow chart
   flow_steps: { step_number: number; description: string; answer: string; is_blank: boolean }[];
   // Summary
@@ -197,6 +202,10 @@ const defaultForm: QuestionFormData = {
   sentences: [{ before: "", after: "", answer: "" }],
   form_fields: [{ label: "", prefix: "", answer: "" }],
   table_cells: [{ row_header: "", col_header: "", answer: "" }],
+  table_mode: "layout",
+  table_columns: ["Column 1", "Column 2"],
+  table_rows: [["", ""]],
+  table_answers: [""],
   flow_steps: [{ step_number: 1, description: "", answer: "", is_blank: true }],
   summary_items: [{ before: "", after: "", answer: "", word_options: "" }],
   short_items: [{ question: "", answer: "" }],
@@ -221,6 +230,19 @@ const STEPS = [
   { id: 5, title: "Review", description: "Review & create" },
 ];
 
+// Distinct {n} placeholder numbers used across a rich table's cells, sorted asc.
+function tablePlaceholderNumbers(rows: string[][]): number[] {
+  const set = new Set<number>();
+  for (const row of rows) {
+    for (const cell of row) {
+      for (const m of String(cell ?? "").matchAll(/\{(\d+)\}/g)) {
+        set.add(parseInt(m[1], 10));
+      }
+    }
+  }
+  return Array.from(set).sort((a, b) => a - b);
+}
+
 // ─── Map Question → form ─────────────────────────────────────
 
 function questionToForm(q: Question): QuestionFormData {
@@ -244,6 +266,12 @@ function questionToForm(q: Question): QuestionFormData {
     sentences: (q.sentences as QuestionFormData["sentences"]) ?? defaultForm.sentences,
     form_fields: (q.form_fields as QuestionFormData["form_fields"]) ?? defaultForm.form_fields,
     table_cells: (q.table_cells as QuestionFormData["table_cells"]) ?? defaultForm.table_cells,
+    table_mode: (q.table_layout as { rows?: unknown[] } | undefined)?.rows?.length ? "layout" : "grid",
+    table_columns: (q.table_layout as { columns?: string[] } | undefined)?.columns ?? defaultForm.table_columns,
+    table_rows: (q.table_layout as { rows?: string[][] } | undefined)?.rows ?? defaultForm.table_rows,
+    table_answers: (q.table_layout as { rows?: unknown[] } | undefined)?.rows?.length
+      ? ((q.table_cells as { answer: string }[] | undefined) ?? []).map((c) => c.answer)
+      : defaultForm.table_answers,
     flow_steps: (q.flow_steps as QuestionFormData["flow_steps"]) ?? defaultForm.flow_steps,
     summary_items: ((q.summary_items as { before: string; after: string; answer: string; word_options?: string[] | string }[]) ?? []).map(s => ({
       before: s.before, after: s.after, answer: s.answer,
@@ -395,6 +423,19 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       return form.form_fields.length >= 1 && form.form_fields.every((f) => f.label.trim() && f.answer.trim());
     }
     if (t === "table_completion") {
+      if (form.table_mode === "layout") {
+        const nums = tablePlaceholderNumbers(form.table_rows);
+        const maxNum = nums.length ? nums[nums.length - 1] : 0;
+        const contiguous = nums.length === maxNum; // {1..maxNum} with no gaps
+        return (
+          form.table_columns.length >= 1 &&
+          form.table_rows.length >= 1 &&
+          maxNum >= 1 &&
+          contiguous &&
+          form.table_answers.length >= maxNum &&
+          form.table_answers.slice(0, maxNum).every((a) => a.trim())
+        );
+      }
       return form.table_cells.length >= 1 && form.table_cells.every((c) => c.answer.trim());
     }
     if (t === "flow_chart_completion") {
@@ -456,7 +497,16 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       base.form_fields = form.form_fields;
     }
     if (t === "table_completion") {
-      base.table_cells = form.table_cells;
+      if (form.table_mode === "layout") {
+        // Ordered answers: index i → placeholder {i + 1}. Trim to the number of
+        // blanks actually used so table_cells lines up 1:1 with the placeholders.
+        const nums = tablePlaceholderNumbers(form.table_rows);
+        const maxNum = nums.length ? nums[nums.length - 1] : 0;
+        base.table_cells = form.table_answers.slice(0, maxNum).map((answer) => ({ answer }));
+        base.table_layout = { columns: form.table_columns, rows: form.table_rows };
+      } else {
+        base.table_cells = form.table_cells;
+      }
     }
     if (t === "flow_chart_completion") {
       base.flow_steps = form.flow_steps;
@@ -1399,12 +1449,127 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
 
     // ── Table Completion ────────────────────────────────
     if (t === "table_completion") {
+      const blankNums = tablePlaceholderNumbers(form.table_rows);
+      const maxBlank = blankNums.length ? blankNums[blankNums.length - 1] : 0;
+      const hasGap = blankNums.length !== maxBlank;
       return (
         <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Table Cells</h3>
-            <p className="text-sm text-[var(--text-muted)]">Add table cells with row/column headers and answers</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Table Completion</h3>
+              <p className="text-sm text-[var(--text-muted)]">
+                {form.table_mode === "layout"
+                  ? "Build the table, then type {1}, {2}… inside cells where a blank should appear."
+                  : "Add table cells with row/column headers and answers"}
+              </p>
+            </div>
+            <div className="flex rounded-lg border border-[var(--border-color)] p-0.5">
+              <button type="button"
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${form.table_mode === "layout" ? "bg-indigo-600 text-white" : "text-[var(--text-secondary)]"}`}
+                onClick={() => updateForm({ table_mode: "layout" })}>Custom layout</button>
+              <button type="button"
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${form.table_mode === "grid" ? "bg-indigo-600 text-white" : "text-[var(--text-secondary)]"}`}
+                onClick={() => updateForm({ table_mode: "grid" })}>Simple grid</button>
+            </div>
           </div>
+
+          {form.table_mode === "layout" && (
+            <div className="space-y-5">
+              {/* Column headers */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Column Headers</label>
+                <div className="flex flex-wrap gap-2">
+                  {form.table_columns.map((col, ci) => (
+                    <div key={ci} className="flex items-center gap-1">
+                      <Input className="w-40" placeholder={`Column ${ci + 1}`} value={col} onChange={(e) => {
+                        const nc = [...form.table_columns]; nc[ci] = e.target.value;
+                        updateForm({ table_columns: nc });
+                      }} />
+                      {form.table_columns.length > 1 && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                          updateForm({
+                            table_columns: form.table_columns.filter((_, j) => j !== ci),
+                            table_rows: form.table_rows.map((r) => r.filter((_, j) => j !== ci)),
+                          });
+                        }}><Trash2 className="h-3 w-3 text-[var(--text-secondary)]" /></Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={() => {
+                    updateForm({
+                      table_columns: [...form.table_columns, ""],
+                      table_rows: form.table_rows.map((r) => [...r, ""]),
+                    });
+                  }}><Plus className="h-3.5 w-3.5 mr-1" /> Column</Button>
+                </div>
+              </div>
+
+              {/* Rows */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Rows</label>
+                {form.table_rows.map((row, ri) => (
+                  <div key={ri} className="rounded-lg border border-[var(--border-color)] p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="secondary" className="text-xs">Row {ri + 1}</Badge>
+                      {form.table_rows.length > 1 && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                          updateForm({ table_rows: form.table_rows.filter((_, j) => j !== ri) });
+                        }}><Trash2 className="h-3 w-3 text-[var(--text-secondary)]" /></Button>
+                      )}
+                    </div>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${form.table_columns.length}, minmax(0, 1fr))` }}>
+                      {form.table_columns.map((_, ci) => (
+                        <textarea key={ci}
+                          className="min-h-[60px] w-full rounded-md border border-[var(--border-color)] bg-transparent p-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          placeholder={`${form.table_columns[ci] || `Column ${ci + 1}`}…`}
+                          value={row[ci] ?? ""}
+                          onChange={(e) => {
+                            const nr = form.table_rows.map((r) => [...r]);
+                            nr[ri][ci] = e.target.value;
+                            updateForm({ table_rows: nr });
+                          }} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={() => {
+                  updateForm({ table_rows: [...form.table_rows, Array(form.table_columns.length).fill("")] });
+                }}><Plus className="h-3.5 w-3.5 mr-1" /> Add Row</Button>
+              </div>
+
+              {/* Answers */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
+                  Answers {maxBlank > 0 && `(${maxBlank} blank${maxBlank > 1 ? "s" : ""} detected)`}
+                </label>
+                {maxBlank === 0 && (
+                  <p className="text-sm text-[var(--text-muted)]">Add {"{1}"}, {"{2}"}… inside the cells above to create blanks.</p>
+                )}
+                {hasGap && (
+                  <p className="text-sm text-red-600">Blanks must be numbered consecutively from {"{1}"} with no gaps.</p>
+                )}
+                <div className="space-y-2">
+                  {Array.from({ length: maxBlank }, (_, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs shrink-0">{`{${i + 1}}`}</Badge>
+                      <div className="flex-1 rounded-md bg-amber-50 border border-amber-200 px-2">
+                        <Input className="border-0 bg-transparent p-0 h-9 text-amber-800 font-semibold focus-visible:ring-0"
+                          placeholder="Correct answer" value={form.table_answers[i] ?? ""} onChange={(e) => {
+                            const na = [...form.table_answers];
+                            while (na.length < maxBlank) na.push("");
+                            na[i] = e.target.value;
+                            updateForm({ table_answers: na });
+                          }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {form.table_mode === "grid" && (
+          <div className="space-y-4">
           {form.table_cells.map((c, i) => (
             <div key={i} className="rounded-lg border border-[var(--border-color)] p-3 grid grid-cols-3 gap-2">
               <div className="space-y-1">
@@ -1447,6 +1612,8 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
           }}>
             <Plus className="h-3.5 w-3.5 mr-1" /> Add Cell
           </Button>
+          </div>
+          )}
         </div>
       );
     }
@@ -1923,7 +2090,17 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   ))}
                 </div>
               )}
-              {(form.type === "table_completion") && (
+              {(form.type === "table_completion" && form.table_mode === "layout") && (
+                <div className="space-y-1">
+                  {Array.from({ length: (() => { const n = tablePlaceholderNumbers(form.table_rows); return n.length ? n[n.length - 1] : 0; })() }, (_, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="text-[var(--text-secondary)] text-xs">{`{${i + 1}}`}</span>
+                      <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">{form.table_answers[i] ?? ""}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(form.type === "table_completion" && form.table_mode === "grid") && (
                 <div className="space-y-1">
                   {form.table_cells.map((c, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
