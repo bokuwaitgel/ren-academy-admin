@@ -3,8 +3,37 @@ import { toast } from "sonner";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export interface ApiError {
-  detail: string | Record<string, unknown>;
+  detail: string;
   status: number;
+}
+
+// FastAPI returns 422 validation errors as detail: [{ loc, msg, type, ... }].
+// Flatten any non-string detail into a readable string so the UI never tries to
+// render an object as a React child (React error #31).
+function normalizeDetail(detail: unknown, fallback: string): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const msgs = detail
+      .map((d) => {
+        if (d && typeof d === "object" && "msg" in d) {
+          const item = d as { loc?: unknown; msg?: unknown };
+          const loc = Array.isArray(item.loc)
+            ? item.loc.filter((p) => p !== "body").join(".")
+            : "";
+          const msg = String(item.msg ?? "");
+          return loc ? `${loc}: ${msg}` : msg;
+        }
+        return typeof d === "string" ? d : JSON.stringify(d);
+      })
+      .filter(Boolean);
+    if (msgs.length) return msgs.join("; ");
+  }
+  if (detail && typeof detail === "object") {
+    const obj = detail as { msg?: unknown };
+    if (typeof obj.msg === "string") return obj.msg;
+    return JSON.stringify(detail);
+  }
+  return fallback;
 }
 
 function getToken(): string | null {
@@ -91,10 +120,10 @@ async function request<T>(
   }
 
   if (!res.ok) {
-    let detail: string | Record<string, unknown> = res.statusText;
+    let detail: string = res.statusText;
     try {
       const body = await res.json();
-      detail = body.detail || body;
+      detail = normalizeDetail(body?.detail ?? body, res.statusText);
     } catch {}
     const err: ApiError = { detail, status: res.status };
     throw err;
@@ -692,10 +721,10 @@ async function uploadMultipart(
   }
 
   if (!res.ok) {
-    let detail: string | Record<string, unknown> = res.statusText;
+    let detail: string = res.statusText;
     try {
       const body = await res.json();
-      detail = body.detail || body;
+      detail = normalizeDetail(body?.detail ?? body, res.statusText);
     } catch {}
     throw { detail, status: res.status } as ApiError;
   }
