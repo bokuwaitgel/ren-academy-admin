@@ -393,10 +393,30 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
   const [form, setForm] = useState<QuestionFormData>(initialForm);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  // Refs to each rich-table cell <textarea>, so "+ Blank" can insert {n} at the caret.
+  const tableCellRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
 
   const updateForm = useCallback((updates: Partial<QuestionFormData>) => {
     setForm((prev) => ({ ...prev, ...updates }));
   }, []);
+
+  // Insert the next sequential {n} blank into a table cell at the caret position.
+  const insertTableBlank = (ri: number, ci: number) => {
+    const nums = tablePlaceholderNumbers(form.table_rows);
+    const next = (nums.length ? nums[nums.length - 1] : 0) + 1;
+    const token = `{${next}}`;
+    const el = tableCellRefs.current[`${ri}-${ci}`];
+    const cur = form.table_rows[ri]?.[ci] ?? "";
+    const pos = el && typeof el.selectionStart === "number" ? el.selectionStart : cur.length;
+    const nr = form.table_rows.map((r) => [...r]);
+    nr[ri][ci] = cur.slice(0, pos) + token + cur.slice(pos);
+    const na = [...form.table_answers];
+    while (na.length < next) na.push("");
+    updateForm({ table_rows: nr, table_answers: na });
+    requestAnimationFrame(() => {
+      if (el) { el.focus(); const p = pos + token.length; el.setSelectionRange(p, p); }
+    });
+  };
 
   const canProceed = (): boolean => {
     switch (step) {
@@ -1459,7 +1479,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
               <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Table Completion</h3>
               <p className="text-sm text-[var(--text-muted)]">
                 {form.table_mode === "layout"
-                  ? "Build the table, then type {1}, {2}… inside cells where a blank should appear."
+                  ? "Build the table, then click + Blank inside a cell where a blank should appear."
                   : "Add table cells with row/column headers and answers"}
               </p>
             </div>
@@ -1519,15 +1539,22 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                     </div>
                     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${form.table_columns.length}, minmax(0, 1fr))` }}>
                       {form.table_columns.map((_, ci) => (
-                        <textarea key={ci}
-                          className="min-h-[60px] w-full rounded-md border border-[var(--border-color)] bg-transparent p-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                          placeholder={`${form.table_columns[ci] || `Column ${ci + 1}`}…`}
-                          value={row[ci] ?? ""}
-                          onChange={(e) => {
-                            const nr = form.table_rows.map((r) => [...r]);
-                            nr[ri][ci] = e.target.value;
-                            updateForm({ table_rows: nr });
-                          }} />
+                        <div key={ci} className="space-y-1">
+                          <textarea
+                            ref={(el) => { tableCellRefs.current[`${ri}-${ci}`] = el; }}
+                            className="min-h-[60px] w-full rounded-md border border-[var(--border-color)] bg-transparent p-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            placeholder={`${form.table_columns[ci] || `Column ${ci + 1}`}…`}
+                            value={row[ci] ?? ""}
+                            onChange={(e) => {
+                              const nr = form.table_rows.map((r) => [...r]);
+                              nr[ri][ci] = e.target.value;
+                              updateForm({ table_rows: nr });
+                            }} />
+                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-indigo-600 hover:text-indigo-700"
+                            onClick={() => insertTableBlank(ri, ci)}>
+                            <Plus className="h-3 w-3 mr-1" /> Blank
+                          </Button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -1543,7 +1570,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                   Answers {maxBlank > 0 && `(${maxBlank} blank${maxBlank > 1 ? "s" : ""} detected)`}
                 </label>
                 {maxBlank === 0 && (
-                  <p className="text-sm text-[var(--text-muted)]">Add {"{1}"}, {"{2}"}… inside the cells above to create blanks.</p>
+                  <p className="text-sm text-[var(--text-muted)]">Click <span className="font-medium text-indigo-600">+ Blank</span> inside a cell to create a numbered blank.</p>
                 )}
                 {hasGap && (
                   <p className="text-sm text-red-600">Blanks must be numbered consecutively from {"{1}"} with no gaps.</p>
