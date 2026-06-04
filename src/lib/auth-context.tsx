@@ -1,8 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { auth, clearTokens, setTokens, type User } from "@/lib/api";
+import { auth, clearTokens, forceLogout, setTokens, type User } from "@/lib/api";
 
 interface AuthState {
   user: User | null;
@@ -21,7 +20,6 @@ const AuthContext = createContext<AuthState>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   const fetchUser = useCallback(async () => {
     try {
@@ -61,12 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = useCallback(() => {
-    // Best-effort server-side logout
+    // Best-effort server-side logout, then hard-reset to the login page so no
+    // stale auth state survives the navigation.
     auth.logout().catch(() => {});
-    clearTokens();
     setUser(null);
-    router.push("/login");
-  }, [router]);
+    forceLogout();
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>

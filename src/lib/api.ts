@@ -56,6 +56,17 @@ export function clearTokens() {
   localStorage.removeItem("refresh_token");
 }
 
+// Hard-reset the session and send the user to the login page. Used both for
+// explicit sign-out and when the session is no longer valid (token expired and
+// cannot be refreshed). Uses a full navigation so all in-memory state is wiped,
+// and skips the redirect if we're already on /login to avoid a loop.
+export function forceLogout() {
+  clearTokens();
+  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+    window.location.replace("/login");
+  }
+}
+
 let isRefreshing = false;
 
 async function request<T>(
@@ -93,10 +104,12 @@ async function request<T>(
     clearTimeout(timeout);
   }
 
-  // 401 interceptor — attempt token refresh
-  if (res.status === 401 && !skipAuth && !isRefreshing) {
+  // 401 interceptor — only for authenticated requests (a token was actually
+  // sent). A 401 with no token is a login/public failure and must surface its
+  // real error message (e.g. "Invalid credentials"), not a session-expiry one.
+  if (res.status === 401 && !skipAuth && token) {
     const refresh = getRefreshToken();
-    if (refresh) {
+    if (refresh && !isRefreshing) {
       isRefreshing = true;
       try {
         const refreshRes = await request<LoginResponse>(
@@ -106,17 +119,19 @@ async function request<T>(
         );
         setTokens(refreshRes.access_token, refreshRes.refresh_token);
         isRefreshing = false;
-        // Retry original request with new token
+        // Retry original request with the new token.
         return request<T>(path, options, false, timeoutMs);
       } catch {
         isRefreshing = false;
-        clearTokens();
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
+        // Refresh failed — session is dead, send the user to login.
+        forceLogout();
         throw { detail: "Session expired. Please log in again.", status: 401 } as ApiError;
       }
     }
+    // No refresh token (or a refresh is already underway and this still 401'd):
+    // the session can't be recovered, so log out and redirect to login.
+    forceLogout();
+    throw { detail: "Session expired. Please log in again.", status: 401 } as ApiError;
   }
 
   if (!res.ok) {
@@ -155,7 +170,7 @@ export const auth = {
     request<LoginResponse>("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
-    }),
+    }, true),
   me: () => request<User>("/api/auth/me"),
   refresh: (refresh_token: string) =>
     request<LoginResponse>("/api/auth/refresh", {
