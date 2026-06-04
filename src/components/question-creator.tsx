@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef } from "react";
 import { questions as qApi, storage, type Question } from "@/lib/api";
+import { MediaLibraryDialog } from "@/components/media-library-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ import {
   BarChart2,
   MessageSquare,
   Upload,
+  FolderOpen,
 } from "lucide-react";
 
 // ─── Constants ───────────────────────────────────────────────
@@ -288,7 +290,16 @@ function questionToForm(q: Question): QuestionFormData {
     correct_options: (q.correct_options as string[]) ?? [],
     sentences: (q.sentences as QuestionFormData["sentences"]) ?? defaultForm.sentences,
     form_fields: (q.form_fields as QuestionFormData["form_fields"]) ?? defaultForm.form_fields,
-    table_cells: (q.table_cells as QuestionFormData["table_cells"]) ?? defaultForm.table_cells,
+    // Normalize cells so every entry has all three keys. Layout-mode questions
+    // store table_cells as answer-only slots ({answer}); without this, switching
+    // to the simple grid would feed `undefined` into controlled inputs.
+    table_cells: ((q.table_cells as Array<{ row_header?: string; col_header?: string; answer?: string }>) ?? []).length
+      ? (q.table_cells as Array<{ row_header?: string; col_header?: string; answer?: string }>).map((c) => ({
+          row_header: c.row_header ?? "",
+          col_header: c.col_header ?? "",
+          answer: c.answer ?? "",
+        }))
+      : defaultForm.table_cells,
     table_mode: (q.table_layout as { rows?: unknown[] } | undefined)?.rows?.length ? "layout" : "grid",
     table_columns: (q.table_layout as { columns?: string[] } | undefined)?.columns ?? defaultForm.table_columns,
     table_rows: (q.table_layout as { rows?: string[][] } | undefined)?.rows ?? defaultForm.table_rows,
@@ -333,6 +344,7 @@ function QuestionFileUpload({
   placeholder,
   uploadFn,
   onChange,
+  mediaKind,
 }: {
   label: string;
   value: string;
@@ -340,9 +352,11 @@ function QuestionFileUpload({
   placeholder: string;
   uploadFn: (file: File) => Promise<{ url: string; key: string }>;
   onChange: (url: string) => void;
+  mediaKind: "audio" | "images";
 }) {
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState("");
+  const [showLibrary, setShowLibrary] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -377,22 +391,45 @@ function QuestionFileUpload({
       {value ? (
         <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--elevated-bg)] px-2.5 py-2 text-xs text-[var(--text-secondary)]">
           <span className="flex-1 truncate">{displayName}</span>
-          <button type="button" onClick={() => onChange("")} className="shrink-0 text-[var(--text-secondary)] hover:text-red-500">
+          <button type="button" onClick={() => setShowLibrary(true)} className="shrink-0 text-[var(--text-secondary)] hover:text-indigo-500" title="Replace">
+            <FolderOpen className="h-3.5 w-3.5" />
+          </button>
+          <button type="button" onClick={() => onChange("")} className="shrink-0 text-[var(--text-secondary)] hover:text-red-500" title="Remove">
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
       ) : (
-        <button
-          type="button"
-          disabled={uploading}
-          onClick={() => ref.current?.click()}
-          className="flex w-full items-center gap-2 rounded-lg border border-dashed border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-xs text-[var(--text-muted)] hover:border-[var(--border-color)] hover:text-[var(--text-secondary)] transition-colors disabled:opacity-50"
-        >
-          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-          {uploading ? "Uploading…" : placeholder}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => ref.current?.click()}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-dashed border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-xs text-[var(--text-muted)] hover:border-[var(--border-color)] hover:text-[var(--text-secondary)] transition-colors disabled:opacity-50"
+          >
+            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+            {uploading ? "Uploading…" : placeholder}
+          </button>
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => setShowLibrary(true)}
+            className="flex items-center justify-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors disabled:opacity-50"
+          >
+            <FolderOpen className="h-3.5 w-3.5" />
+            Library
+          </button>
+        </div>
       )}
       {err && <p className="text-[11px] text-red-500">{err}</p>}
+
+      {showLibrary && (
+        <MediaLibraryDialog
+          kind={mediaKind}
+          uploadFn={uploadFn}
+          onSelect={(url) => onChange(url)}
+          onClose={() => setShowLibrary(false)}
+        />
+      )}
     </div>
   );
 }
@@ -483,10 +520,10 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
           maxNum >= 1 &&
           contiguous &&
           form.table_answers.length >= maxNum &&
-          form.table_answers.slice(0, maxNum).every((a) => a.trim())
+          form.table_answers.slice(0, maxNum).every((a) => (a ?? "").trim())
         );
       }
-      return form.table_cells.length >= 1 && form.table_cells.every((c) => c.answer.trim());
+      return form.table_cells.length >= 1 && form.table_cells.every((c) => (c.answer ?? "").trim());
     }
     if (t === "flow_chart_completion") {
       return form.flow_steps.length >= 1 && form.flow_steps.some((s) => s.is_blank && s.answer?.trim());
@@ -565,6 +602,10 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
         base.table_layout = { columns: form.table_columns, rows: form.table_rows };
       } else {
         base.table_cells = form.table_cells;
+        // Clear any previously-saved custom layout so an edit that switches from
+        // layout → grid actually persists as a simple grid (otherwise the stale
+        // table_layout wins on reload and the change appears not to save).
+        base.table_layout = null;
       }
     }
     if (t === "flow_chart_completion") {
@@ -888,6 +929,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
             value={form.audio_url}
             accept="audio/*"
             placeholder="Upload audio file"
+            mediaKind="audio"
             uploadFn={(file) => storage.uploadQuestionAudio(form.section, file)}
             onChange={(url) => updateForm({ audio_url: url })}
           />
@@ -897,6 +939,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
           value={form.image_url}
           accept="image/*"
           placeholder="Upload image"
+          mediaKind="images"
           uploadFn={(file) => storage.uploadQuestionImage(form.section, file)}
           onChange={(url) => updateForm({ image_url: url })}
         />
@@ -1667,14 +1710,14 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
             <div key={i} className="rounded-lg border border-[var(--border-color)] p-3 grid grid-cols-3 gap-2">
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Row Header</label>
-                <Input placeholder="Monday" value={c.row_header} onChange={(e) => {
+                <Input placeholder="Monday" value={c.row_header ?? ""} onChange={(e) => {
                   const nc = [...form.table_cells]; nc[i] = { ...nc[i], row_header: e.target.value };
                   updateForm({ table_cells: nc });
                 }} />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Col Header</label>
-                <Input placeholder="Time" value={c.col_header} onChange={(e) => {
+                <Input placeholder="Time" value={c.col_header ?? ""} onChange={(e) => {
                   const nc = [...form.table_cells]; nc[i] = { ...nc[i], col_header: e.target.value };
                   updateForm({ table_cells: nc });
                 }} />
@@ -1683,7 +1726,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                 <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Answer</label>
                 <div className="rounded-md bg-amber-50 border border-amber-200 px-2">
                   <Input className="border-0 bg-transparent p-0 h-9 text-amber-800 font-semibold focus-visible:ring-0" placeholder="9:00 AM"
-                    value={c.answer} onChange={(e) => {
+                    value={c.answer ?? ""} onChange={(e) => {
                       const nc = [...form.table_cells]; nc[i] = { ...nc[i], answer: e.target.value };
                       updateForm({ table_cells: nc });
                     }} />

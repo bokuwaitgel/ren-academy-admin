@@ -746,7 +746,28 @@ async function uploadMultipart(
   return res.json();
 }
 
+export interface MediaItem {
+  key: string;
+  url: string;
+  filename: string;
+  size: number;
+  kind: "audio" | "images";
+  content_type: string | null;
+  last_modified: string | null;
+}
+
 export const storage = {
+  // Lists previously uploaded media (audio/images) from S3 for reuse.
+  listMedia: (params: { kind?: "audio" | "images"; search?: string; limit?: number } = {}) => {
+    const qsObj: Record<string, string> = {};
+    if (params.kind) qsObj.kind = params.kind;
+    if (params.search) qsObj.search = params.search;
+    if (params.limit) qsObj.limit = String(params.limit);
+    const query = new URLSearchParams(qsObj).toString();
+    return request<{ items: MediaItem[]; count: number }>(
+      `/api/storage/admin/s3/list-media${query ? `?${query}` : ""}`,
+    );
+  },
   uploadListeningAudio: (testId: string, moduleType: string, file: File) =>
     uploadMultipart(
       { test_id: testId, module_type: moduleType, section: "listening", sub_path: "audio", content_type: "audio/mpeg" },

@@ -94,6 +94,21 @@ function truncate(str: string, n = 60) {
   return str.length > n ? str.slice(0, n) + "…" : str;
 }
 
+// Render a custom-layout cell: replace each {n} placeholder with its highlighted answer.
+function renderLayoutCell(cell: string, cells?: { answer: string }[]) {
+  return String(cell ?? "").split(/(\{\d+\})/g).map((part, idx) => {
+    const m = part.match(/^\{(\d+)\}$/);
+    if (!m) return <span key={idx}>{part}</span>;
+    const n = parseInt(m[1], 10);
+    const answer = cells?.[n - 1]?.answer ?? "";
+    return (
+      <span key={idx} className="rounded bg-emerald-500/15 px-1 font-semibold text-emerald-300">
+        {answer || `{${n}}`}
+      </span>
+    );
+  });
+}
+
 function groupByType(items: Question[]): { type: string; label: string; questions: Question[] }[] {
   const map = new Map<string, Question[]>();
   for (const q of items) {
@@ -425,6 +440,7 @@ export default function QuestionsPage() {
             const q = viewQ as Record<string, unknown>;
             const formFields = q.form_fields as { label: string; prefix: string; answer: string }[] | undefined;
             const tableCells = q.table_cells as { row_header: string; col_header: string; answer: string }[] | undefined;
+            const tableLayout = q.table_layout as { columns?: string[]; rows?: string[][] } | undefined;
             const flowSteps = q.flow_steps as { step_number: number; description: string; answer: string; is_blank: boolean }[] | undefined;
             const sentences = q.sentences as { before: string; after: string; answer: string }[] | undefined;
             const summaryItems = q.summary_items as { before: string; after: string; answer: string; word_options: string }[] | undefined;
@@ -559,8 +575,36 @@ export default function QuestionsPage() {
                   </div>
                 )}
 
-                {/* Table completion */}
-                {tableCells && tableCells.length > 0 && (
+                {/* Table completion — custom layout */}
+                {tableLayout?.rows?.length ? (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Table (custom layout)</p>
+                    <div className="rounded border border-[var(--border-color)] overflow-x-auto">
+                      <table className="w-full text-xs">
+                        {tableLayout.columns?.length ? (
+                          <thead>
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--surface)]">
+                              {tableLayout.columns.map((col, ci) => (
+                                <th key={ci} className="px-2 py-1 text-left text-[var(--text-secondary)]">{col}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                        ) : null}
+                        <tbody>
+                          {tableLayout.rows.map((row, ri) => (
+                            <tr key={ri} className="border-b border-[var(--border-color)] last:border-0">
+                              {row.map((cell, ci) => (
+                                <td key={ci} className="px-2 py-1 align-top text-[var(--text-secondary)]">
+                                  {renderLayoutCell(cell, tableCells)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : tableCells && tableCells.length > 0 ? (
                   <div>
                     <p className="mb-1 text-xs font-medium text-[var(--text-muted)]">Table Cells</p>
                     <div className="rounded border border-[var(--border-color)] overflow-hidden">
@@ -578,7 +622,7 @@ export default function QuestionsPage() {
                       </table>
                     </div>
                   </div>
-                )}
+                ) : null}
 
                 {/* Flow chart */}
                 {flowSteps && flowSteps.length > 0 && (
