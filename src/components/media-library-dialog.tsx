@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { storage, type MediaItem, type ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Search, Upload, X, Check, Music } from "lucide-react";
+import { Loader2, Search, Upload, X, Check, Music, Trash2 } from "lucide-react";
 
 interface MediaLibraryDialogProps {
   kind: "audio" | "images";
@@ -26,6 +26,7 @@ export function MediaLibraryDialog({ kind, uploadFn, onSelect, onClose }: MediaL
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async (q: string) => {
@@ -65,6 +66,21 @@ export function MediaLibraryDialog({ kind, uploadFn, onSelect, onClose }: MediaL
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const handleDelete = async (item: MediaItem) => {
+    if (!window.confirm(`Permanently delete "${item.filename}"? This cannot be undone and will break any test/question still using it.`)) return;
+    setDeletingKey(item.key);
+    setError("");
+    try {
+      await storage.deleteMedia(item.key);
+      setItems((prev) => prev.filter((it) => it.key !== item.key));
+    } catch (e) {
+      const apiErr = e as ApiError;
+      setError(typeof apiErr?.detail === "string" ? apiErr.detail : "Failed to delete file");
+    } finally {
+      setDeletingKey(null);
     }
   };
 
@@ -120,22 +136,36 @@ export function MediaLibraryDialog({ kind, uploadFn, onSelect, onClose }: MediaL
           ) : kind === "images" ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {items.map((item) => (
-                <button
+                <div
                   key={item.key}
-                  onClick={() => { onSelect(item.url); onClose(); }}
-                  className="group relative overflow-hidden rounded-lg border border-[var(--border-color)] bg-[var(--elevated-bg)] text-left transition-all hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500"
-                  title={item.filename}
+                  className="group relative overflow-hidden rounded-lg border border-[var(--border-color)] bg-[var(--elevated-bg)] transition-all hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.url} alt={item.filename} className="h-28 w-full object-cover" loading="lazy" />
-                  <div className="flex items-center justify-between gap-1 px-2 py-1.5">
-                    <span className="truncate text-[11px] text-[var(--text-muted)]">{item.filename}</span>
-                    <span className="shrink-0 text-[10px] text-[var(--text-secondary)]">{formatSize(item.size)}</span>
-                  </div>
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-indigo-600/0 opacity-0 transition-all group-hover:bg-indigo-600/10 group-hover:opacity-100">
-                    <span className="rounded-full bg-indigo-600 p-1.5 text-white"><Check className="h-4 w-4" /></span>
-                  </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => { onSelect(item.url); onClose(); }}
+                    className="block w-full text-left"
+                    title={item.filename}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={item.url} alt={item.filename} className="h-28 w-full object-cover" loading="lazy" />
+                    <div className="flex items-center justify-between gap-1 px-2 py-1.5">
+                      <span className="truncate text-[11px] text-[var(--text-muted)]">{item.filename}</span>
+                      <span className="shrink-0 text-[10px] text-[var(--text-secondary)]">{formatSize(item.size)}</span>
+                    </div>
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-indigo-600/0 opacity-0 transition-all group-hover:bg-indigo-600/10 group-hover:opacity-100">
+                      <span className="rounded-full bg-indigo-600 p-1.5 text-white"><Check className="h-4 w-4" /></span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deletingKey === item.key}
+                    onClick={() => handleDelete(item)}
+                    className="absolute right-1.5 top-1.5 z-10 rounded-full bg-black/60 p-1.5 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100 disabled:opacity-100"
+                    title="Delete permanently"
+                  >
+                    {deletingKey === item.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
               ))}
             </div>
           ) : (
@@ -155,6 +185,16 @@ export function MediaLibraryDialog({ kind, uploadFn, onSelect, onClose }: MediaL
                   <span className="hidden shrink-0 text-xs text-[var(--text-secondary)] sm:block">{formatSize(item.size)}</span>
                   <Button size="sm" onClick={() => { onSelect(item.url); onClose(); }}>
                     <Check className="h-3.5 w-3.5 mr-1" /> Select
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="shrink-0 text-[var(--text-muted)] hover:text-red-500"
+                    disabled={deletingKey === item.key}
+                    onClick={() => handleDelete(item)}
+                    title="Delete permanently"
+                  >
+                    {deletingKey === item.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                   </Button>
                 </div>
               ))}

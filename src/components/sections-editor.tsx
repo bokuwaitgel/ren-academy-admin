@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, X, Headphones, BookOpen, PenLine, Mic2, Loader2, Upload } from "lucide-react";
+import { Plus, Trash2, X, Headphones, BookOpen, PenLine, Mic2, Loader2, Upload, FolderOpen } from "lucide-react";
 import QuestionPickerDialog, { type QuestionMeta } from "@/components/question-picker-dialog";
+import { MediaLibraryDialog } from "@/components/media-library-dialog";
 import { questions as qApi, storage } from "@/lib/api";
 
 // ── Exported types ──────────────────────────────────────────────
@@ -108,13 +109,15 @@ type FileUploadInputProps = {
   value: string;
   accept: string;
   placeholder: string;
+  mediaKind: "audio" | "images";
   uploadFn: (file: File) => Promise<{ url: string; key: string }>;
   onChange: (url: string) => void;
 };
 
-function FileUploadInput({ value, accept, placeholder, uploadFn, onChange }: FileUploadInputProps) {
+function FileUploadInput({ value, accept, placeholder, mediaKind, uploadFn, onChange }: FileUploadInputProps) {
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState("");
+  const [showLibrary, setShowLibrary] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,24 +144,50 @@ function FileUploadInput({ value, accept, placeholder, uploadFn, onChange }: Fil
     <div className="mt-1 space-y-1">
       <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleFile} />
       {value ? (
-        <div className="flex items-center gap-1.5 rounded-md border border-[var(--border-color)] bg-[var(--card-bg)] px-2.5 py-1.5 text-xs text-[var(--text-secondary)]">
-          <span className="flex-1 truncate">{displayName}</span>
-          <button type="button" onClick={() => onChange("")} className="shrink-0 text-[var(--text-muted)] hover:text-red-400 transition-colors">
-            <X className="h-3 w-3" />
-          </button>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 rounded-md border border-[var(--border-color)] bg-[var(--card-bg)] px-2.5 py-1.5 text-xs text-[var(--text-secondary)]">
+            <span className="flex-1 truncate">{displayName}</span>
+            <button type="button" onClick={() => setShowLibrary(true)} className="shrink-0 text-[var(--text-muted)] hover:text-indigo-400 transition-colors" title="Replace from library or upload">
+              <FolderOpen className="h-3 w-3" />
+            </button>
+            <button type="button" onClick={() => onChange("")} className="shrink-0 text-[var(--text-muted)] hover:text-red-400 transition-colors" title="Remove">
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+          {mediaKind === "audio" && <audio controls preload="none" src={value} className="h-8 w-full" />}
         </div>
       ) : (
-        <button
-          type="button"
-          disabled={uploading}
-          onClick={() => inputRef.current?.click()}
-          className="flex items-center gap-1.5 rounded-md border border-dashed border-[var(--border-color)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:border-[var(--border-color)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
-        >
-          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-          {uploading ? "Uploading…" : placeholder}
-        </button>
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-md border border-dashed border-[var(--border-color)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:border-[var(--border-color)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+          >
+            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+            {uploading ? "Uploading…" : placeholder}
+          </button>
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => setShowLibrary(true)}
+            className="flex items-center gap-1.5 rounded-md border border-[var(--border-color)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+          >
+            <FolderOpen className="h-3.5 w-3.5" />
+            Library
+          </button>
+        </div>
       )}
       {err && <p className="text-[11px] text-red-400">{err}</p>}
+
+      {showLibrary && (
+        <MediaLibraryDialog
+          kind={mediaKind}
+          uploadFn={uploadFn}
+          onSelect={(url) => onChange(url)}
+          onClose={() => setShowLibrary(false)}
+        />
+      )}
     </div>
   );
 }
@@ -465,6 +494,7 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
                   value={sec.audio_url}
                   accept="audio/*"
                   placeholder="Upload audio file"
+                  mediaKind="audio"
                   onChange={(url) => updateListeningSection(i, { audio_url: url })}
                   uploadFn={(file) =>
                     storage.uploadListeningAudio(effectiveTestId, effectiveModuleType, file)
@@ -548,6 +578,7 @@ export default function TestModulesEditor({ modules, onChange, testId, moduleTyp
                     value={task.image_url ?? ""}
                     accept="image/*"
                     placeholder="Upload image"
+                    mediaKind="images"
                     onChange={(url) => updateWritingTask(i, { image_url: url || undefined })}
                     uploadFn={(file) =>
                       storage.uploadWritingImage(effectiveTestId, effectiveModuleType, file)

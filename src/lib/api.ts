@@ -768,6 +768,12 @@ export const storage = {
       `/api/storage/admin/s3/list-media${query ? `?${query}` : ""}`,
     );
   },
+  // Permanently deletes an uploaded media object from S3 (admin only).
+  deleteMedia: (key: string) =>
+    request<{ deleted: boolean; key: string }>("/api/storage/admin/s3/delete-media", {
+      method: "POST",
+      body: JSON.stringify({ key }),
+    }),
   uploadListeningAudio: (testId: string, moduleType: string, file: File) =>
     uploadMultipart(
       { test_id: testId, module_type: moduleType, section: "listening", sub_path: "audio", content_type: "audio/mpeg" },
