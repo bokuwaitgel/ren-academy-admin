@@ -115,6 +115,14 @@ const QUESTION_TYPES: QuestionTypeInfo[] = [
   { value: "speaking_discussion", label: "Discussion", description: "In-depth discussion questions (Part 3)", icon: MessageSquare, sections: ["speaking"] },
 ];
 
+// Writing question types — all require a `writing_prompt` object on the backend.
+const WRITING_TYPES = [
+  "graph_description", "letter_writing", "process_description", "map_comparison",
+  "essay_opinion", "essay_discussion", "essay_problem_solution", "essay_advantages", "essay_mixed",
+];
+// Task 1 Academic types that describe a visual and so take a chart type / image.
+const WRITING_CHART_TYPES = ["graph_description", "process_description", "map_comparison"];
+
 // ─── Types ───────────────────────────────────────────────────
 
 interface AnswerOption {
@@ -176,6 +184,14 @@ interface QuestionFormData {
   cue_card_topic: string;
   cue_card_bullets: string[];
   cue_card_follow_up: string;
+  // Writing prompt (Writing Task 1 & 2)
+  writing_prompt: string;
+  writing_word_limit: number;
+  writing_time_limit: number;
+  writing_sample_answer: string;
+  writing_chart_type: string;
+  writing_letter_type: string;
+  writing_letter_situation: string;
 }
 
 const defaultForm: QuestionFormData = {
@@ -220,6 +236,13 @@ const defaultForm: QuestionFormData = {
   cue_card_topic: "",
   cue_card_bullets: [""],
   cue_card_follow_up: "",
+  writing_prompt: "",
+  writing_word_limit: 250,
+  writing_time_limit: 40,
+  writing_sample_answer: "",
+  writing_chart_type: "",
+  writing_letter_type: "",
+  writing_letter_situation: "",
 };
 
 const STEPS = [
@@ -291,6 +314,13 @@ function questionToForm(q: Question): QuestionFormData {
       ? (q.cue_card as { bullet_points: string[] }).bullet_points
       : [""],
     cue_card_follow_up: (q.cue_card as { follow_up?: string } | undefined)?.follow_up ?? "",
+    writing_prompt: (q.writing_prompt as { prompt?: string } | undefined)?.prompt ?? "",
+    writing_word_limit: (q.writing_prompt as { word_limit?: number } | undefined)?.word_limit ?? defaultForm.writing_word_limit,
+    writing_time_limit: (q.writing_prompt as { time_limit_mins?: number } | undefined)?.time_limit_mins ?? defaultForm.writing_time_limit,
+    writing_sample_answer: (q.writing_prompt as { sample_answer?: string } | undefined)?.sample_answer ?? "",
+    writing_chart_type: (q.writing_prompt as { chart_type?: string } | undefined)?.chart_type ?? "",
+    writing_letter_type: (q.writing_prompt as { letter_type?: string } | undefined)?.letter_type ?? "",
+    writing_letter_situation: (q.writing_prompt as { letter_situation?: string } | undefined)?.letter_situation ?? "",
   };
 }
 
@@ -482,6 +512,15 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
     if (t === "pick_from_list") {
       return form.pick_items.length >= 1 && form.pick_items.every((p) => p.question.trim() && p.answers.length > 0);
     }
+    if (WRITING_TYPES.includes(t)) {
+      return form.writing_prompt.trim().length > 0 && form.writing_word_limit >= 50 && form.writing_time_limit >= 10;
+    }
+    if (t === "speaking_cue_card") {
+      return form.cue_card_topic.trim().length > 0;
+    }
+    if (t === "speaking_interview" || t === "speaking_discussion") {
+      return form.speaking_questions.some((q) => q.trim());
+    }
     return true;
   };
 
@@ -571,6 +610,24 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
         prep_time_seconds: 60,
         speak_time_seconds: 120,
       };
+    }
+    if (WRITING_TYPES.includes(t)) {
+      const wp: Record<string, unknown> = {
+        prompt: form.writing_prompt.trim(),
+        word_limit: form.writing_word_limit,
+        time_limit_mins: form.writing_time_limit,
+      };
+      if (form.writing_sample_answer.trim()) wp.sample_answer = form.writing_sample_answer.trim();
+      // Task 1 visual types: carry the chart type and reuse the question-level image.
+      if (WRITING_CHART_TYPES.includes(t)) {
+        if (form.writing_chart_type.trim()) wp.chart_type = form.writing_chart_type.trim();
+        if (form.image_url.trim()) wp.image_url = form.image_url.trim();
+      }
+      if (t === "letter_writing") {
+        if (form.writing_letter_type.trim()) wp.letter_type = form.writing_letter_type.trim();
+        if (form.writing_letter_situation.trim()) wp.letter_situation = form.writing_letter_situation.trim();
+      }
+      base.writing_prompt = wp;
     }
     return base;
   };
@@ -735,7 +792,16 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
             return (
               <button
                 key={qt.value}
-                onClick={() => updateForm({ type: qt.value })}
+                onClick={() => {
+                  const updates: Partial<QuestionFormData> = { type: qt.value };
+                  // Prefill writing limits by task: Task 1 = 150w/20m, Task 2 = 250w/40m.
+                  if (WRITING_TYPES.includes(qt.value)) {
+                    const isTask1 = form.section_part === "writing_task_1";
+                    updates.writing_word_limit = isTask1 ? 150 : 250;
+                    updates.writing_time_limit = isTask1 ? 20 : 40;
+                  }
+                  updateForm(updates);
+                }}
                 className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all ${
                   selected
                     ? "border-indigo-500 bg-indigo-500/10 ring-1 ring-indigo-500"
@@ -1995,6 +2061,109 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       );
     }
 
+    // ── Writing (Task 1 & 2) ────────────────────────────
+    if (WRITING_TYPES.includes(t)) {
+      const isLetter = t === "letter_writing";
+      const isChart = WRITING_CHART_TYPES.includes(t);
+      return (
+        <div className="space-y-5">
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-1">Writing Prompt</h3>
+            <p className="text-sm text-[var(--text-muted)]">Define the task the candidate must respond to</p>
+          </div>
+
+          {/* Prompt */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Prompt *</label>
+            <textarea
+              className="flex w-full rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm shadow-sm placeholder:text-[var(--text-secondary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-color)] min-h-[120px] resize-y"
+              value={form.writing_prompt}
+              onChange={(e) => updateForm({ writing_prompt: e.target.value })}
+              placeholder={isLetter
+                ? "e.g. You recently stayed at a hotel and were unhappy with the service. Write a letter to the manager…"
+                : isChart
+                ? "e.g. The chart below shows electricity production by source in three countries. Summarise the information…"
+                : "e.g. Some people believe that… To what extent do you agree or disagree?"}
+            />
+          </div>
+
+          {/* Limits */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Word Limit</label>
+              <Input
+                type="number"
+                min={50}
+                value={form.writing_word_limit}
+                onChange={(e) => updateForm({ writing_word_limit: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Time Limit (mins)</label>
+              <Input
+                type="number"
+                min={10}
+                value={form.writing_time_limit}
+                onChange={(e) => updateForm({ writing_time_limit: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+          </div>
+
+          {/* Task 1 visual specifics */}
+          {isChart && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Chart / Visual Type</label>
+              <Select value={form.writing_chart_type || undefined} onValueChange={(v) => updateForm({ writing_chart_type: v })}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Select type…" /></SelectTrigger>
+                <SelectContent>
+                  {["bar chart", "line graph", "pie chart", "table", "map", "process diagram"].map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-[var(--text-secondary)]">Upload the chart/diagram image on the Content step — it will be attached to this prompt.</p>
+            </div>
+          )}
+
+          {/* Letter specifics */}
+          {isLetter && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Letter Type</label>
+                <Select value={form.writing_letter_type || undefined} onValueChange={(v) => updateForm({ writing_letter_type: v })}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Select…" /></SelectTrigger>
+                  <SelectContent>
+                    {["formal", "semi-formal", "informal"].map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Situation</label>
+                <Input
+                  value={form.writing_letter_situation}
+                  placeholder="e.g. Complaint about poor hotel service"
+                  onChange={(e) => updateForm({ writing_letter_situation: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Sample answer */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Sample Answer <span className="text-[var(--text-secondary)] normal-case">(optional)</span></label>
+            <textarea
+              className="flex w-full rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm shadow-sm placeholder:text-[var(--text-secondary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--border-color)] min-h-[100px] resize-y"
+              value={form.writing_sample_answer}
+              onChange={(e) => updateForm({ writing_sample_answer: e.target.value })}
+              placeholder="A model band-9 answer for examiner reference…"
+            />
+          </div>
+        </div>
+      );
+    }
+
     // ── Default fallback ────────────────────────────────
     return (
       <div className="text-center py-8 text-[var(--text-secondary)]">
@@ -2229,6 +2398,24 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
                     ))
                   ) : (
                     <p className="text-xs text-[var(--text-secondary)] italic">No questions added</p>
+                  )}
+                </div>
+              )}
+              {WRITING_TYPES.includes(form.type) && (
+                <div className="space-y-2 text-sm">
+                  {form.writing_prompt.trim() ? (
+                    <p className="text-[var(--text-secondary)] whitespace-pre-wrap">{form.writing_prompt}</p>
+                  ) : (
+                    <p className="text-xs text-[var(--text-secondary)] italic">No prompt added</p>
+                  )}
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="text-[10px]">{form.writing_word_limit} words</Badge>
+                    <Badge variant="secondary" className="text-[10px]">{form.writing_time_limit} mins</Badge>
+                    {form.writing_chart_type && <Badge variant="secondary" className="text-[10px]">{form.writing_chart_type}</Badge>}
+                    {form.writing_letter_type && <Badge variant="secondary" className="text-[10px]">{form.writing_letter_type}</Badge>}
+                  </div>
+                  {form.writing_letter_situation.trim() && (
+                    <p className="text-xs text-[var(--text-muted)] italic">Situation: {form.writing_letter_situation}</p>
                   )}
                 </div>
               )}
