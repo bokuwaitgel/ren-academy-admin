@@ -700,8 +700,9 @@ export const payments = {
 // ── Storage ──────────────────────────────────
 
 // Uploads stream raw file bytes via multipart/form-data — no base64 inflation.
-// Allow a long timeout so slow connections don't abort mid-upload.
-const UPLOAD_TIMEOUT_MS = 300_000;
+// Allow a long timeout so large audio (full listening tracks) and slow
+// connections don't abort mid-upload. 30 min covers big files on slow links.
+const UPLOAD_TIMEOUT_MS = 1_800_000;
 
 async function uploadMultipart(
   fields: Record<string, string>,

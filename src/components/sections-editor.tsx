@@ -155,6 +155,8 @@ function FileUploadInput({ value, accept, placeholder, mediaKind, uploadFn, onCh
             </button>
           </div>
           {mediaKind === "audio" && <audio controls preload="none" src={value} className="h-8 w-full" />}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {mediaKind === "images" && <img src={value} alt="Selected image" className="max-h-40 w-auto rounded border border-[var(--border-color)]" />}
         </div>
       ) : (
         <div className="flex gap-1.5">

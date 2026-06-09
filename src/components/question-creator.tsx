@@ -389,14 +389,19 @@ function QuestionFileUpload({
       <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">{label}</label>
       <input ref={ref} type="file" accept={accept} className="hidden" onChange={handleFile} />
       {value ? (
-        <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--elevated-bg)] px-2.5 py-2 text-xs text-[var(--text-secondary)]">
-          <span className="flex-1 truncate">{displayName}</span>
-          <button type="button" onClick={() => setShowLibrary(true)} className="shrink-0 text-[var(--text-secondary)] hover:text-indigo-500" title="Replace">
-            <FolderOpen className="h-3.5 w-3.5" />
-          </button>
-          <button type="button" onClick={() => onChange("")} className="shrink-0 text-[var(--text-secondary)] hover:text-red-500" title="Remove">
-            <X className="h-3.5 w-3.5" />
-          </button>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--elevated-bg)] px-2.5 py-2 text-xs text-[var(--text-secondary)]">
+            <span className="flex-1 truncate">{displayName}</span>
+            <button type="button" onClick={() => setShowLibrary(true)} className="shrink-0 text-[var(--text-secondary)] hover:text-indigo-500" title="Replace">
+              <FolderOpen className="h-3.5 w-3.5" />
+            </button>
+            <button type="button" onClick={() => onChange("")} className="shrink-0 text-[var(--text-secondary)] hover:text-red-500" title="Remove">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          {mediaKind === "audio" && <audio controls preload="none" src={value} className="h-8 w-full" />}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {mediaKind === "images" && <img src={value} alt="Selected image" className="max-h-40 w-auto rounded border border-[var(--border-color)]" />}
         </div>
       ) : (
         <div className="flex gap-2">
@@ -923,7 +928,7 @@ export default function QuestionCreator({ onClose, onCreated, initialData, onUpd
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        {form.section === "listening" && (
+        {(form.section === "listening" || form.section === "speaking") && (
           <QuestionFileUpload
             label="Audio"
             value={form.audio_url}
