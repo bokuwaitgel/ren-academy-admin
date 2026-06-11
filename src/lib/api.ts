@@ -592,6 +592,11 @@ export const admin = {
         method: "POST",
         body: JSON.stringify({ session_id, section, band_score, details }),
       }),
+    rescore: (session_id: string) =>
+      request<Session>("/api/admin/sessions/rescore", {
+        method: "POST",
+        body: JSON.stringify({ session_id }),
+      }),
     delete: (session_id: string) =>
       request<{ status: string; session_id: string }>("/api/admin/sessions/delete", {
         method: "DELETE",

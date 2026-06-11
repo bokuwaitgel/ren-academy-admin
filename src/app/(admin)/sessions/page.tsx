@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
-  Eye, Star, Loader2, ChevronLeft, ChevronRight, CheckCircle2, Clock, Circle, ChevronDown, ChevronUp, Trash2, GraduationCap,
+  Eye, Star, Loader2, ChevronLeft, ChevronRight, CheckCircle2, Clock, Circle, ChevronDown, ChevronUp, Trash2, GraduationCap, RefreshCw,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -683,6 +683,7 @@ export default function SessionsPage() {
   const [gradeErr, setGradeErr] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Session | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [rescoringId, setRescoringId] = useState<string | null>(null);
 
 
   const isSuperAdmin = currentUser?.role === "super_admin" || currentUser?.role === "super-admin";
@@ -736,6 +737,17 @@ export default function SessionsPage() {
     } catch (e: unknown) {
       setGradeErr((e as { detail?: string })?.detail ?? "Grade failed");
     } finally { setGradeSaving(false); }
+  };
+
+  const handleRescore = async (session: Session) => {
+    setRescoringId(session.id);
+    try {
+      await admin.sessions.rescore(session.id);
+      toast.success("Session rescored");
+      load();
+    } catch (e: unknown) {
+      showApiError(e, "Failed to rescore session");
+    } finally { setRescoringId(null); }
   };
 
   const handleDelete = async () => {
@@ -852,6 +864,20 @@ export default function SessionsPage() {
                             onClick={() => { setGradeOpen(s); setGradeErr(""); }}
                           >
                             <CheckCircle2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {(s.status === "submitted" || s.status === "graded") && (
+                          <Button
+                            variant="ghost" size="icon"
+                            aria-label="Rescore listening/reading"
+                            title="Rescore listening/reading with current rules"
+                            className="text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+                            onClick={() => handleRescore(s)}
+                            disabled={rescoringId === s.id}
+                          >
+                            {rescoringId === s.id
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <RefreshCw className="h-4 w-4" />}
                           </Button>
                         )}
                         {isSuperAdmin && (
