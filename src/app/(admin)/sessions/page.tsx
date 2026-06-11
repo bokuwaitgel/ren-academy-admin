@@ -146,8 +146,17 @@ function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
                   </div>
                 </button>
 
-                {isOpen && ev && (
+                {isOpen && (
                   <div className="border-t border-[var(--border-color)] px-3 pb-3 pt-2 space-y-2 text-xs">
+                    {ans.audio_url ? (
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-1">Tester Audio</p>
+                        <audio controls preload="none" src={ans.audio_url} className="w-full h-9" />
+                      </div>
+                    ) : (
+                      <p className="text-[var(--text-muted)] italic">No audio recording.</p>
+                    )}
+                    {ev && (<>
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="secondary">{ev.speaking_level}</Badge>
                       <span className="text-[var(--text-muted)]">{ev.grammar_errors} grammar err · {ev.vocabulary_errors} vocab err</span>
@@ -189,6 +198,7 @@ function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
                     {ev.motivation && (
                       <p className="text-indigo-600 dark:text-indigo-400 italic">{ev.motivation}</p>
                     )}
+                    </>)}
                   </div>
                 )}
               </div>
@@ -213,9 +223,83 @@ function formatAnswer(val: unknown): string {
   return String(val);
 }
 
+// Number-word normalization mirroring backend _normalize_answer in
+// ielts_service.py, so the per-row match icon agrees with the score
+// ("thirty" === "30", "twenty-five" === "25").
+const NUM_UNITS: Record<string, number> = {
+  zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+  eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13,
+  fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+};
+const NUM_TENS: Record<string, number> = {
+  twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+};
+const NUM_SCALES: Record<string, number> = { hundred: 100, thousand: 1_000, million: 1_000_000 };
+
+function isNumWord(tok: string): boolean {
+  return tok in NUM_UNITS || tok in NUM_TENS || tok in NUM_SCALES;
+}
+
+function wordsToNumber(tokens: string[]): number | null {
+  let total = 0, current = 0;
+  let seen = false;
+  let prev: "start" | "unit" | "teen" | "tens" | "scale" = "start";
+  for (const tok of tokens) {
+    if (tok === "and") continue;
+    if (tok in NUM_UNITS) {
+      const val = NUM_UNITS[tok];
+      if (prev === "unit" || prev === "teen" || (prev === "tens" && !(val >= 1 && val <= 9))) return null;
+      current += val;
+      prev = val >= 1 && val <= 9 ? "unit" : "teen";
+      seen = true;
+    } else if (tok in NUM_TENS) {
+      if (prev === "unit" || prev === "teen" || prev === "tens") return null;
+      current += NUM_TENS[tok];
+      prev = "tens";
+      seen = true;
+    } else if (tok in NUM_SCALES) {
+      if (!seen) current = 1;
+      const scale = NUM_SCALES[tok];
+      if (scale === 100) current *= scale;
+      else { total += current * scale; current = 0; }
+      prev = "scale";
+      seen = true;
+    } else return null;
+  }
+  return seen ? total + current : null;
+}
+
+function normalizeAnswer(text: string): string {
+  const tokens = text.trim().toLowerCase().replace(/(?<=[a-z])-(?=[a-z])/g, " ").split(/\s+/).filter(Boolean);
+  const out: string[] = [];
+  let i = 0;
+  while (i < tokens.length) {
+    if (isNumWord(tokens[i])) {
+      let j = i;
+      while (j < tokens.length && (isNumWord(tokens[j]) || (tokens[j] === "and" && j > i))) j++;
+      while (j > i && tokens[j - 1] === "and") j--;
+      let num: number | null = null;
+      while (j > i) {
+        num = wordsToNumber(tokens.slice(i, j));
+        if (num !== null) break;
+        j--;
+        while (j > i && tokens[j - 1] === "and") j--;
+      }
+      if (num !== null) {
+        out.push(String(num));
+        i = j;
+        continue;
+      }
+    }
+    out.push(tokens[i]);
+    i++;
+  }
+  return out.join(" ");
+}
+
 function answersMatch(a: unknown, b: unknown): boolean {
   if (a == null || b == null) return false;
-  return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+  return normalizeAnswer(String(a)) === normalizeAnswer(String(b));
 }
 
 function SubAnswerTable({ user, correct }: { user: unknown; correct: unknown }) {
