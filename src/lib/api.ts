@@ -444,7 +444,8 @@ export interface SpeakingSectionDetails {
     pronunciation: number | null;
   };
   answer_count: number;
-  answer_details: SpeakingAnswerDetail[];
+  answer_details?: SpeakingAnswerDetail[];
+  feedback?: string;
 }
 
 export interface WritingEvaluation {
@@ -470,6 +471,8 @@ export interface WritingEvaluation {
 
 export interface WritingSectionDetails {
   ai_evaluations?: Record<string, WritingEvaluation>;
+  criteria?: Record<string, number | null>;
+  feedback?: string;
   [key: string]: unknown;
 }
 

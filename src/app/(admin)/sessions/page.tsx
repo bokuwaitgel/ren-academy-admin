@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import {
   Eye, Star, Loader2, ChevronLeft, ChevronRight, CheckCircle2, Clock, Circle, ChevronDown, ChevronUp, Trash2, GraduationCap, RefreshCw,
 } from "lucide-react";
@@ -105,6 +104,7 @@ function BandBar({ score }: { score: number | null }) {
 
 function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
   const [expanded, setExpanded] = useState<number | null>(null);
+  const answerDetails = details.answer_details ?? [];
 
   return (
     <div className="mt-3 space-y-3">
@@ -119,13 +119,21 @@ function SpeakingDetails({ details }: { details: SpeakingSectionDetails }) {
         ))}
       </div>
 
+      {/* Examiner feedback (manual grading) */}
+      {details.feedback && (
+        <div className="rounded-lg border border-[var(--border-color)] bg-[var(--surface)] p-3">
+          <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-1">Examiner Feedback</p>
+          <p className="text-xs leading-relaxed text-[var(--text-secondary)] whitespace-pre-wrap">{details.feedback}</p>
+        </div>
+      )}
+
       {/* Per-answer cards */}
-      {details.answer_details.length > 0 && (
+      {answerDetails.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">
-            Answer Details ({details.answer_details.length})
+            Answer Details ({answerDetails.length})
           </p>
-          {details.answer_details.map((ans, i) => {
+          {answerDetails.map((ans, i) => {
             const ev = ans.evaluation;
             const isOpen = expanded === i;
             return (
@@ -453,16 +461,43 @@ function WritingDetails({
     new Set([...Object.keys(writingAnswers), ...Object.keys(evals)])
   ).sort((a, b) => a.localeCompare(b));
 
+  const manualCriteria = details?.criteria;
+  const manualBlock = (manualCriteria || details?.feedback) && (
+    <div className="space-y-2">
+      {manualCriteria && (
+        <div className="rounded-lg border border-[var(--border-color)] bg-[var(--surface)] p-3 space-y-2">
+          <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">Examiner Criteria</p>
+          {Object.entries(WRITING_CRITERIA_LABELS).map(([k, label]) => (
+            <div key={k} className="grid grid-cols-[140px_1fr] items-center gap-2">
+              <span className="text-xs text-[var(--text-secondary)]">{label}</span>
+              <BandBar score={manualCriteria[k] ?? null} />
+            </div>
+          ))}
+        </div>
+      )}
+      {details?.feedback && (
+        <div className="rounded-lg border border-[var(--border-color)] bg-[var(--surface)] p-3">
+          <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-1">Examiner Feedback</p>
+          <p className="text-xs leading-relaxed text-[var(--text-secondary)] whitespace-pre-wrap">{details.feedback}</p>
+        </div>
+      )}
+    </div>
+  );
+
   if (!keys.length) {
     return (
-      <p className="mt-2 text-xs text-[var(--text-muted)]">
-        No writing submissions found.
-      </p>
+      <div className="mt-2 space-y-2">
+        {manualBlock}
+        <p className="text-xs text-[var(--text-muted)]">
+          No writing submissions found.
+        </p>
+      </div>
     );
   }
 
   return (
     <div className="mt-3 space-y-2">
+      {manualBlock}
       {keys.map((key) => {
         const essay = typeof writingAnswers[key] === "string" ? (writingAnswers[key] as string) : "";
         const ev: WritingEvaluation | undefined = evals[key];
@@ -678,7 +713,8 @@ export default function SessionsPage() {
   const [gradeOpen, setGradeOpen] = useState<Session | null>(null);
   const [gradeSection, setGradeSection] = useState("writing");
   const [gradeBand, setGradeBand] = useState("6.0");
-  const [gradeDetails, setGradeDetails] = useState("");
+  const [gradeCriteria, setGradeCriteria] = useState<Record<string, string>>({});
+  const [gradeFeedback, setGradeFeedback] = useState("");
   const [gradeSaving, setGradeSaving] = useState(false);
   const [gradeErr, setGradeErr] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Session | null>(null);
@@ -721,17 +757,25 @@ export default function SessionsPage() {
     setGradeErr("");
     setGradeSaving(true);
     try {
+      const labels = gradeSection === "speaking" ? CRITERIA_LABELS : WRITING_CRITERIA_LABELS;
+      const criteria: Record<string, number> = {};
+      for (const key of Object.keys(labels)) {
+        const v = gradeCriteria[key];
+        if (v) criteria[key] = Number(v);
+      }
       let details: Record<string, unknown> | undefined;
-      if (gradeDetails.trim()) {
-        try { details = JSON.parse(gradeDetails); } catch {
-          setGradeErr("Details must be valid JSON"); setGradeSaving(false); return;
-        }
+      if (Object.keys(criteria).length || gradeFeedback.trim()) {
+        details = { manual_grade: true };
+        if (Object.keys(criteria).length) details.criteria = criteria;
+        if (gradeFeedback.trim()) details.feedback = gradeFeedback.trim();
+        if (gradeSection === "speaking") details.band_score = Number(gradeBand);
       }
       await admin.sessions.grade(gradeOpen.id, gradeSection, Number(gradeBand), details);
       toast.success("Grade submitted successfully");
       setGradeSection("writing");
       setGradeBand("6.0");
-      setGradeDetails("");
+      setGradeCriteria({});
+      setGradeFeedback("");
       setGradeOpen(null);
       load();
     } catch (e: unknown) {
@@ -1085,7 +1129,7 @@ export default function SessionsPage() {
             )}
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[var(--text-secondary)]">Section</label>
-              <Select value={gradeSection} onValueChange={setGradeSection}>
+              <Select value={gradeSection} onValueChange={v => { setGradeSection(v); setGradeCriteria({}); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="writing">Writing</SelectItem>
@@ -1105,11 +1149,34 @@ export default function SessionsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-[var(--text-secondary)]">Details (JSON, optional)</label>
-              <Input
-                value={gradeDetails}
-                onChange={e => setGradeDetails(e.target.value)}
-                placeholder='{"task_achievement": 6, "coherence": 6}'
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Criteria Scores (optional)</label>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(gradeSection === "speaking" ? CRITERIA_LABELS : WRITING_CRITERIA_LABELS).map(([key, label]) => (
+                  <div key={key} className="space-y-1">
+                    <span className="text-xs text-[var(--text-muted)]">{label}</span>
+                    <Select
+                      value={gradeCriteria[key] ?? ""}
+                      onValueChange={v => setGradeCriteria(prev => ({ ...prev, [key]: v }))}
+                    >
+                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectContent>
+                        {BAND_OPTIONS.map(b => (
+                          <SelectItem key={b} value={b}>{b}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Feedback (optional)</label>
+              <textarea
+                value={gradeFeedback}
+                onChange={e => setGradeFeedback(e.target.value)}
+                rows={3}
+                placeholder="Overall feedback for the candidate…"
+                className="w-full rounded-md border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
               />
             </div>
             <div className="flex gap-2 pt-1">
